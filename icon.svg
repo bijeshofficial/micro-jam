@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fa8ea"/><stop offset="1" stop-color="#cfe6f7"/></linearGradient></defs>
+  <rect width="256" height="256" rx="56" fill="url(#sky)"/>
+  <path d="M0 170 L60 120 L100 150 L150 100 L210 150 L256 125 L256 256 L0 256 Z" fill="#9fb7d9"/>
+  <rect x="0" y="182" width="256" height="74" fill="#b9b2a6"/>
+  <ellipse cx="132" cy="200" rx="92" ry="14" fill="#000" opacity="0.25"/>
+  <rect x="34" y="96" width="188" height="100" rx="26" fill="#1f2433"/>
+  <rect x="40" y="100" width="176" height="90" rx="22" fill="#a81d2b"/>
+  <rect x="40" y="100" width="176" height="62" rx="22" fill="#e63946"/>
+  <rect x="56" y="114" width="30" height="24" rx="6" fill="#2a3a55"/>
+  <rect x="94" y="114" width="30" height="24" rx="6" fill="#2a3a55"/>
+  <rect x="132" y="114" width="30" height="24" rx="6" fill="#2a3a55"/>
+  <rect x="170" y="110" width="38" height="34" rx="8" fill="#2a3a55"/>
+  <rect x="40" y="148" width="176" height="8" fill="#ffc300"/>
+  <circle cx="80" cy="192" r="16" fill="#2b2b30"/><circle cx="80" cy="192" r="7" fill="#e9eef2"/>
+  <circle cx="180" cy="192" r="16" fill="#2b2b30"/><circle cx="180" cy="192" r="7" fill="#e9eef2"/>
+  <circle cx="212" cy="168" r="7" fill="#fff3b0"/>
+</svg>

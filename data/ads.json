@@ -1,0 +1,17 @@
+{
+	"_doc": "Rewarded ads only (no interstitials, no banners). Fill in the 4 AdMob IDs below from your AdMob account (docs/LAUNCH_GUIDE.md, part 2). app_ids also go in project.godot under [admob] (the plugin writes them into the Android manifest / iOS Info.plist). ad_units are your LIVE rewarded units: they are used only by release builds. Debug builds always use Google's public test units (test_ad_units) so you never tap your own live ads.",
+	"app_ids": {
+		"android": "ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX",
+		"ios": "ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX"
+	},
+	"ad_units": {
+		"android": "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX",
+		"ios": "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
+	},
+	"test_ad_units": {
+		"android": "ca-app-pub-3940256099942544/5224354917",
+		"ios": "ca-app-pub-3940256099942544/1712485313"
+	},
+	"interstitials": false,
+	"privacy_policy_url": "https://www.neuronnest.com/micro-jam/privacy"
+}

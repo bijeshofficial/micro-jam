@@ -1,0 +1,14 @@
+{
+	"_comment": "Daily tasks (3 per day, easy) and the Daily Jam challenge. Task progress counts stats gained since the day started. %d is the target.",
+	"per_day": 3,
+	"tasks": [
+		{"id": "win_levels", "text": "Win %d levels", "text_one": "Win a level", "stat": "levels_completed", "targets": [1, 2, 3], "reward": {"coins": 20}},
+		{"id": "send_buses", "text": "Send %d full buses", "stat": "buses_sent", "targets": [8, 10, 12], "reward": {"coins": 15}},
+		{"id": "board", "text": "Board %d passengers", "stat": "passengers_boarded", "targets": [40, 50, 60], "reward": {"coins": 15}},
+		{"id": "booster", "text": "Use %d boosters", "text_one": "Use a booster", "stat": "boosters_used", "targets": [1], "reward": {"shuffle": 1}},
+		{"id": "clean_win", "text": "Win %d levels with no boosters", "text_one": "Win a level with no boosters", "stat": "no_booster_wins", "targets": [1, 2], "reward": {"coins": 25}},
+		{"id": "daily_jam", "text": "Clear the Daily Jam", "stat": "daily_jams", "targets": [1], "reward": {"coins": 20}}
+	],
+	"chest": {"coins": 60, "extra_bay": 1},
+	"challenge": {"reward_coins": 40, "streak_bonus": 10, "streak_cap": 7, "min_level": 18}
+}

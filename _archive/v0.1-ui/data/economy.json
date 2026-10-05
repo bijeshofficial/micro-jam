@@ -1,0 +1,47 @@
+{
+	"level_reward": 10,
+	"milestone_every": 10,
+	"milestone_coins": 100,
+	"daily_free_coins": 50,
+	"lives": {"max": 5, "regen_seconds": 1800, "refill_price": 250, "free_levels": 8},
+	"starting_boosters": {"crane": 1, "extra_bay": 1, "shuffle": 1},
+	"booster_prices": {"crane": 90, "extra_bay": 70, "shuffle": 50},
+	"tutorial_grants": {"crane": 2, "extra_bay": 2, "shuffle": 2},
+	"coin_packs": [
+		{"id": "coins_small", "name": "Pocket change", "coins": 500, "price_label": "$0.99"},
+		{"id": "coins_medium", "name": "Fare box", "coins": 1200, "price_label": "$1.99"},
+		{"id": "coins_large", "name": "Depot safe", "coins": 3000, "price_label": "$3.99", "ribbon": "Best value"}
+	],
+	"bundles": [
+		{"id": "bundle_crane", "name": "Crane x3", "price": 240, "grant": {"crane": 3}},
+		{"id": "bundle_bay", "name": "Extra Bay x3", "price": 190, "grant": {"extra_bay": 3}},
+		{"id": "bundle_shuffle", "name": "Shuffle x3", "price": 130, "grant": {"shuffle": 3}},
+		{"id": "bundle_mixed", "name": "Rush-hour kit", "price": 320, "grant": {"crane": 2, "extra_bay": 2, "shuffle": 2}}
+	],
+	"cosmetic_categories": [
+		{"id": "livery", "name": "Bus liveries"},
+		{"id": "horn", "name": "Horn sounds"},
+		{"id": "outfit", "name": "Passenger outfits"},
+		{"id": "theme", "name": "Bus park themes"}
+	],
+	"cosmetics": [
+		{"id": "livery_classic", "category": "livery", "name": "Classic Stripes", "price": 0, "style": "stripes"},
+		{"id": "livery_mountain", "category": "livery", "name": "Mountain Express", "price": 60, "style": "zigzag"},
+		{"id": "livery_flower", "category": "livery", "name": "Phool Bari", "price": 150, "style": "flowers"},
+		{"id": "livery_racer", "category": "livery", "name": "Highway Racer", "price": 300, "style": "racer"},
+		{"id": "livery_tassel", "category": "livery", "name": "Jhilimili Tassels", "price": 500, "style": "tassels"},
+		{"id": "horn_peep", "category": "horn", "name": "Peep Peep", "price": 0, "sound": "horn_peep"},
+		{"id": "horn_pompom", "category": "horn", "name": "Pom Pom", "price": 40, "sound": "horn_pompom"},
+		{"id": "horn_tune", "category": "horn", "name": "Melody Horn", "price": 180, "sound": "horn_tune"},
+		{"id": "horn_air", "category": "horn", "name": "Big Air Horn", "price": 350, "sound": "horn_air"},
+		{"id": "outfit_everyday", "category": "outfit", "name": "Everyday", "price": 0, "style": "everyday"},
+		{"id": "outfit_rain", "category": "outfit", "name": "Raincoats", "price": 120, "style": "rain"},
+		{"id": "outfit_trek", "category": "outfit", "name": "Trekkers", "price": 250, "style": "trek"},
+		{"id": "outfit_festival", "category": "outfit", "name": "Festival Best", "price": 400, "style": "festival"},
+		{"id": "theme_morning", "category": "theme", "name": "Clear Morning", "price": 0},
+		{"id": "theme_rain", "category": "theme", "name": "Rainy Day", "price": 200},
+		{"id": "theme_festival", "category": "theme", "name": "Festival Day", "price": 400},
+		{"id": "theme_night", "category": "theme", "name": "Night Bus", "price": 600},
+		{"id": "theme_snow", "category": "theme", "name": "Snowy Mountain Town", "price": 800}
+	]
+}

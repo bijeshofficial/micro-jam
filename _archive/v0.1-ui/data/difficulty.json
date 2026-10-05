@@ -1,0 +1,37 @@
+{
+	"_comment": "Bus-count ramp, lot sizes, difficulty rhythm, twists and generator budgets. Levels 1-20 come from levels_authored.json. 'window' = how many buses the passenger queue serves at once (more = harder bay juggling).",
+	"authored_levels": 20,
+	"max_fill": 0.82,
+	"max_buses": 26,
+	"bus_jitter": 1,
+	"ramp": [
+		{"level": 1, "buses": 3, "colors": 2, "w": 4, "h": 5, "big": 0.0, "window": 1},
+		{"level": 10, "buses": 8, "colors": 3, "w": 5, "h": 6, "big": 0.2, "window": 2},
+		{"level": 30, "buses": 14, "colors": 5, "w": 6, "h": 7, "big": 0.25, "window": 2},
+		{"level": 60, "buses": 18, "colors": 6, "w": 7, "h": 8, "big": 0.3, "window": 2},
+		{"level": 100, "buses": 20, "colors": 7, "w": 8, "h": 9, "big": 0.3, "window": 3},
+		{"level": 250, "buses": 23, "colors": 8, "w": 8, "h": 9, "big": 0.3, "window": 3},
+		{"level": 500, "buses": 25, "colors": 8, "w": 8, "h": 9, "big": 0.3, "window": 3}
+	],
+	"rhythm": {"hard_every": 5, "super_every": 10, "plain_until": 4},
+	"tiers": {
+		"easy": {"label": "", "coin_mult": 1.0, "bus_delta": -2, "window_delta": -1, "candidates": 3, "pick": "min"},
+		"normal": {"label": "", "coin_mult": 1.0, "bus_delta": 0, "window_delta": 0, "candidates": 3, "pick": "median"},
+		"hard": {"label": "HARD", "coin_mult": 1.5, "bus_delta": 1, "window_delta": 0, "candidates": 4, "pick": "max"},
+		"super": {"label": "SUPER HARD", "coin_mult": 2.0, "bus_delta": 2, "window_delta": 0, "candidates": 6, "pick": "max"}
+	},
+	"twists": {
+		"sleep": {"from": 15, "max": 3, "title": "Sleeping driver", "text": "Zzz... This driver dozed off. Tap once to wake them up, then tap again to drive."},
+		"cones": {"from": 30, "max": 3, "clear_after": 3, "title": "Roadwork", "text": "Cones block the way! The road crew packs up after 3 buses have left."},
+		"covered": {"from": 50, "ratio": 0.35, "title": "Umbrellas", "text": "Some passengers hide under umbrellas. You see their colour when they reach the front."},
+		"tunnel": {"from": 80, "buses_min": 2, "buses_max": 4, "title": "Tunnel", "text": "Buses wait inside the tunnel. When one drives off, the next rolls out, always in the same order."}
+	},
+	"twist_chance": 0.5,
+	"generator": {
+		"node_budget": 20000,
+		"max_attempts": 60,
+		"shrink_every": 8,
+		"playouts": 24
+	},
+	"hint": {"idle_seconds": 12.0, "node_budget": 6000}
+}

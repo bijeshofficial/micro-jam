@@ -1,0 +1,16 @@
+{
+	"achievements": [
+		{"id": "first_departure", "title": "First Departure", "desc": "Send your first full bus on its way", "stat": "buses_sent", "target": 1, "reward": {"coins": 20}},
+		{"id": "buses_100", "title": "Busy Depot", "desc": "Send 100 buses", "stat": "buses_sent", "target": 100, "reward": {"coins": 100, "shuffle": 1}},
+		{"id": "buses_1000", "title": "Traffic Legend", "desc": "Send 1,000 buses", "stat": "buses_sent", "target": 1000, "reward": {"coins": 500, "crane": 2}},
+		{"id": "full_seats", "title": "Full Seats", "desc": "Board 1,000 passengers", "stat": "passengers_boarded", "target": 1000, "reward": {"coins": 150}},
+		{"id": "full_house", "title": "Full House", "desc": "Fill every bay and still win", "stat": "full_house_wins", "target": 1, "reward": {"coins": 80, "extra_bay": 1}},
+		{"id": "crane_free", "title": "Crane-free", "desc": "Win 20 levels without the Crane", "stat": "crane_free_wins", "target": 20, "reward": {"coins": 150, "crane": 1}},
+		{"id": "clean_driving", "title": "Clean Driving", "desc": "Win 10 levels in a row without boosters", "stat": "best_no_booster_streak", "target": 10, "reward": {"coins": 200}},
+		{"id": "rush_hour", "title": "Rush Hour", "desc": "Win 10 SUPER HARD levels", "stat": "super_completed", "target": 10, "reward": {"coins": 300, "extra_bay": 2}},
+		{"id": "route_50", "title": "Route Master I", "desc": "Complete level 50", "stat": "highest_level", "target": 50, "reward": {"coins": 250, "shuffle": 2}},
+		{"id": "route_100", "title": "Route Master II", "desc": "Complete level 100", "stat": "highest_level", "target": 100, "reward": {"coins": 500, "crane": 2}},
+		{"id": "route_500", "title": "Route Master III", "desc": "Complete level 500", "stat": "highest_level", "target": 500, "reward": {"coins": 2000}},
+		{"id": "collector", "title": "Collector", "desc": "Own 3 cosmetics", "stat": "cosmetics_owned", "target": 3, "reward": {"coins": 150}}
+	]
+}

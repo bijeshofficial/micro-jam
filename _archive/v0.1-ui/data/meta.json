@@ -1,0 +1,35 @@
+{
+	"colors": [
+		{"id": "red", "name": "Red", "hex": "e63946"},
+		{"id": "blue", "name": "Blue", "hex": "1d7fe0"},
+		{"id": "yellow", "name": "Yellow", "hex": "ffc300"},
+		{"id": "green", "name": "Green", "hex": "2ec27e"},
+		{"id": "purple", "name": "Purple", "hex": "8e44ad"},
+		{"id": "orange", "name": "Orange", "hex": "ff7f11"},
+		{"id": "pink", "name": "Pink", "hex": "ff5fa2"},
+		{"id": "teal", "name": "Teal", "hex": "12b5b0"}
+	],
+	"towns": ["Juneli Pul", "Chiya Danda", "Momo Chowk", "Phoolpati", "Hawa Ghat", "Tara Tole", "Badal Bazaar", "Himal Gaun", "Mithopani", "Suntala Besi", "Kuhiro Kot", "Rato Pul", "Dhunge Dhara", "Ghumti Mod", "Lali Gurans Tar", "Sano Bazaar"],
+	"bus_names": ["Mero Gadi", "Sathi", "Ramailo", "Hawa Jahaj", "Chito Chito", "Sundar", "Pahad Rani", "Junkiri", "Bato Raja", "Jhilimili", "Dhanyabad", "Ghumphir"],
+	"avatars": [
+		{"id": "driver", "name": "Driver"},
+		{"id": "conductor", "name": "Conductor"},
+		{"id": "student", "name": "Student"},
+		{"id": "trekker", "name": "Trekker"},
+		{"id": "didi", "name": "Shawl"},
+		{"id": "hajurba", "name": "Hajurba"},
+		{"id": "cap", "name": "Cricket cap"},
+		{"id": "chef", "name": "Momo cook"}
+	],
+	"tips": [
+		"Tip: a blocked tap costs nothing. Bump away!",
+		"Tip: watch the next passengers before you send a bus out.",
+		"Tip: keep one bay free when you can.",
+		"Tip: a full bus leaves on its own and frees its bay.",
+		"Tip: the Crane lifts any bus, even a boxed-in one.",
+		"Tip: there is no timer. Take your time.",
+		"Tip: every 10 levels the depot sends you a gift."
+	],
+	"cheers": ["JAM CLEAR!", "RAMRO!", "SABASH!", "WAAH!"],
+	"khalasi_lines": ["Jaam, jaam!", "Aaunus, aaunus!", "Khali cha!", "Ali ali!", "Chito chito!"]
+}

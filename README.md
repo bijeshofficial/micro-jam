@@ -11,8 +11,9 @@ renderer). There are infinite seeded levels, and every one is guaranteed solvabl
 - [`docs/LEVELS.md`](docs/LEVELS.md): how many levels there are and how to add more.
 - [`docs/store/README.md`](docs/store/README.md): the store kit, with
   ready-to-upload screenshots (Google Play 1080x1920, App Store 6.5"
-  1242x2688), a draft icon and feature graphic, transparent art cut-outs, Canva
-  prompts and draft listing text.
+  1242x2688), the app icons, a draft feature graphic, gameplay videos
+  (`tools/make_videos.sh`), transparent art cut-outs, Canva prompts and draft
+  listing text.
 
 ## Run
 

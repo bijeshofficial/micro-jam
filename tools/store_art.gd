@@ -1,7 +1,7 @@
 extends Node
 ## Canva art for the store, rendered offscreen from the game's own drawing
-## code: transparent cut-outs (logo, buses, conductor, passengers), a draft
-## app icon (512 and 1024) and a draft Play feature graphic (1024x500).
+## code: transparent cut-outs (logo, buses, conductor, passengers) and a
+## draft Play feature graphic (1024x500). App icons: tools/import_icon.py.
 ## Driven by tools/store_shots.gd -- --art.
 
 
@@ -52,46 +52,9 @@ func export_all(out: String) -> void:
 		_drawer(vp, func(n: Node2D) -> void:
 			for i in 6:
 				PeopleArt.draw_passenger(n, Vector2(150 + i * 240, 490), 400, GameData.bus_color([0, 1, 2, 3, 6, 7][i]), i * 7 + 3, "everyday", i == 4)), art + "passengers.png", true)
-	# Draft icon (Play 512, App Store 1024) and Play feature graphic.
-	for sz in [512, 1024]:
-		await _render(Vector2i(sz, sz), func(vp: SubViewport) -> void:
-			_drawer(vp, func(n: Node2D) -> void: _draw_icon(n, float(sz))), art + "icon_%d.png" % sz, false)
+	# Play feature graphic. The app icons come from the designed artwork:
+	# python3 tools/import_icon.py <folder> (see docs/store/README.md).
 	await _render(Vector2i(1024, 500), _build_feature, art + "feature_graphic_1024x500.png", false)
-	# Launcher icons for the Android export (assets/app_icon/).
-	var icons := "res://assets/app_icon/"
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(icons))
-	await _render(Vector2i(192, 192), func(vp: SubViewport) -> void:
-		_drawer(vp, func(n: Node2D) -> void: _draw_icon(n, 192.0)), icons + "icon_192.png", false)
-	await _render(Vector2i(432, 432), func(vp: SubViewport) -> void:
-		_drawer(vp, func(n: Node2D) -> void: _draw_icon_background(n, 432.0)), icons + "adaptive_background.png", false)
-	await _render(Vector2i(432, 432), func(vp: SubViewport) -> void:
-		_drawer(vp, func(n: Node2D) -> void:
-			# Keep the bus inside the central 66% safe zone (masks crop the rest).
-			BusArt.draw_bus(n, Vector2(216, 236), 118, 2, Park.RIGHT, Color("e63946"), {"name": "Mero Gadi", "livery": "stripes", "arrow": false})), icons + "adaptive_foreground.png", true)
-
-
-func _draw_icon(n: Node2D, s: float) -> void:
-	var u := s / 512.0
-	# Sky to warm horizon, hazy mountains, asphalt.
-	n.draw_polygon(PackedVector2Array([Vector2(0, 0), Vector2(s, 0), Vector2(s, s), Vector2(0, s)]),
-		PackedColorArray([Color("4f9be6"), Color("4f9be6"), Color("cfe6f7"), Color("cfe6f7")]))
-	n.draw_colored_polygon(PackedVector2Array([Vector2(0, 300) * u, Vector2(120, 200) * u, Vector2(200, 260) * u, Vector2(320, 170) * u, Vector2(430, 250) * u, Vector2(512, 210) * u, Vector2(512, 512) * u, Vector2(0, 512) * u]), Color("9fb7d9"))
-	n.draw_colored_polygon(PackedVector2Array([Vector2(320, 170) * u, Vector2(352, 200) * u, Vector2(320, 196) * u, Vector2(292, 192) * u]), Color.WHITE)
-	n.draw_rect(Rect2(Vector2(0, 360) * u, Vector2(512, 152) * u), Color("8e97ab"))
-	for k in 4:
-		n.draw_rect(Rect2(Vector2(20 + k * 140, 446) * u, Vector2(80, 14) * u), Color(1, 1, 1, 0.8))
-	BusArt.draw_bus(n, Vector2(256, 318) * u, 205 * u, 2, Park.RIGHT, Color("e63946"), {"name": "Mero Gadi", "livery": "stripes", "arrow": false})
-
-
-## Adaptive-icon background: the icon's scenery without the bus.
-func _draw_icon_background(n: Node2D, s: float) -> void:
-	var u := s / 512.0
-	n.draw_polygon(PackedVector2Array([Vector2(0, 0), Vector2(s, 0), Vector2(s, s), Vector2(0, s)]),
-		PackedColorArray([Color("4f9be6"), Color("4f9be6"), Color("cfe6f7"), Color("cfe6f7")]))
-	n.draw_colored_polygon(PackedVector2Array([Vector2(0, 300) * u, Vector2(120, 200) * u, Vector2(200, 260) * u, Vector2(320, 170) * u, Vector2(430, 250) * u, Vector2(512, 210) * u, Vector2(512, 512) * u, Vector2(0, 512) * u]), Color("9fb7d9"))
-	n.draw_rect(Rect2(Vector2(0, 360) * u, Vector2(512, 152) * u), Color("8e97ab"))
-	for k in 4:
-		n.draw_rect(Rect2(Vector2(20 + k * 140, 446) * u, Vector2(80, 14) * u), Color(1, 1, 1, 0.8))
 
 
 func _build_feature(vp: SubViewport) -> void:

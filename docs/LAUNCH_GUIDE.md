@@ -64,10 +64,13 @@ These are in the repo now; nothing to do:
   - **Android APK (phone test)**: an APK with test ads.
   - Both use a Gradle build, target API 36 / min 24, and 32- and 64-bit
     phones. Permissions: internet, network state, vibrate.
-- [x] **Launcher icons:** `assets/app_icon/` holds the 192 px icon plus the
-  adaptive foreground and background, drawn from the game's art.
-- [x] **Store screenshots** (Play 1080×1920 and App Store 6.5"), a draft icon
-  and a draft feature graphic, plus Canva prompts: `docs/store/`.
+- [x] **App icon:** the designed red-bus icon. `tools/import_icon.py` turned
+  it into the Android launcher icons (`assets/app_icon/`: 192 px, the
+  adaptive foreground and background, and a bus silhouette for Android 13
+  themed icons) and the store icons
+  (`docs/store/art/icon_512.png`, `icon_1024.png`).
+- [x] **Store screenshots** (Play 1080×1920 and App Store 6.5"), gameplay
+  videos, a draft feature graphic, plus Canva prompts: `docs/store/`.
 - [x] **Build script** `tools/build_android.sh`, tested: it built a working
   test APK on this Mac. A release build refuses to run while the AdMob IDs
   are still placeholders.
@@ -226,13 +229,15 @@ every rewarded button and decides the reward itself.
 
 ---
 
-## 4. Launcher icon (you, optional)
+## 4. App icon (done)
 
-- [ ] The game already has a launcher icon drawn from its art
-  (`assets/app_icon/`). For the polished version, make the icon in Canva
-  (`docs/store/README.md` has the prompts) and send it to me as a
-  1024×1024 PNG. (Claude) I'll cut the 192 px icon and the adaptive
-  foreground and background from it.
+- [x] The designed icon is in. To change it later, export a new one (for
+  example from easyappicon.com, or any square PNG of 1024 px or more) and
+  run:
+  ```
+  python3 tools/import_icon.py ~/Downloads/"micro jam icon assets"
+  ```
+  It rewrites the launcher icons and the store icons.
 
 ---
 
@@ -362,8 +367,7 @@ are done.
   - Email: info@neuronnest.com · Website: https://www.neuronnest.com
 - [ ] **Grow → Store presence → Main store listing**
   - [ ] App name, short description and full description (Appendix A)
-  - [ ] **App icon:** 512×512 PNG, from your Canva icon or
-    `docs/store/art/icon_512.png`
+  - [ ] **App icon:** `docs/store/art/icon_512.png` (512×512)
   - [ ] **Feature graphic:** 1024×500, from Canva or
     `docs/store/art/feature_graphic_1024x500.png`
   - [ ] **Phone screenshots:** upload all 8 from
@@ -450,7 +454,7 @@ are done.
 - [ ] (Claude) iOS export preset:
   - bundle ID `com.neuronnest.microjam` and your **Team ID** (Apple
     Developer → Membership);
-  - icons from the 1024 px icon;
+  - icons from `docs/store/art/icon_1024.png` (no alpha channel);
   - AdMob's `GADApplicationIdentifier`, written by the plugin from
     `project.godot [admob]`;
   - Google's `SKAdNetworkItems` list;

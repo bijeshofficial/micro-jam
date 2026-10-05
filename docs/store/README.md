@@ -10,15 +10,22 @@ what players see.
 |---|---|---|
 | `screenshots/android/01..08_*.png` | 1080 x 1920 | Google Play phone screenshots (upload as is) |
 | `screenshots/ios-6.5/01..08_*.png` | 1242 x 2688 | App Store 6.5" iPhone screenshots (upload as is) |
-| `art/icon_512.png` | 512 x 512 | Draft Play icon, rendered from the game |
-| `art/icon_1024.png` | 1024 x 1024, no alpha | Draft App Store icon |
+| `art/icon_512.png` | 512 x 512 | **Google Play app icon** (upload as is) |
+| `art/icon_1024.png` | 1024 x 1024, no alpha | **App Store icon** (upload as is) |
+| `art/icon_master.png` | 1536 x 1536 | The designed icon at full size (source for the others) |
 | `art/feature_graphic_1024x500.png` | 1024 x 500 | Draft Play feature graphic |
 | `art/logo_micro_jam.png` | transparent | Title logo to drop into Canva |
 | `art/bus_hero_red.png`, `art/bus_trio.png` | transparent | Bus cut-outs for Canva |
 | `art/khalasi_conductor.png` | transparent | The conductor mascot, cheering |
 | `art/passengers.png` | transparent | A queue of passengers (one with an umbrella) |
+| `video/micro_jam_promo_1080x1920.mp4` | 1080 x 1920, 60 fps, ~35 s | Shorts / Reels / TikTok |
+| `video/micro_jam_youtube_1920x1080.mp4` | 1920 x 1080, 60 fps, ~35 s | Google Play promo video (via YouTube) |
+| `video/micro_jam_appstore_886x1920.mp4` | 886 x 1920, 30 fps, < 30 s | App Store app preview (6.9" and 6.5" iPhone) |
 
-You can upload the draft icon and feature graphic directly. The Canva prompts
+The app icons are final, made from the designed icon by
+`python3 tools/import_icon.py <export folder>`. That script also writes the
+Android launcher icons in `assets/app_icon/`. You can upload the draft
+feature graphic directly. The Canva prompts
 below are for making a more polished version. Upload the transparent cut-outs
 into Canva and build on them, so the store art matches the game exactly.
 
@@ -103,6 +110,96 @@ If the AI result looks too "realistic", add *"flat-shaded cartoon, toy-like,
 simple shapes"* to the prompt. If the bus is too small, add *"close-up,
 bus filling 80% of the frame"*.
 
+## More icon prompts (variations to try)
+
+Generate a few of these, shrink each to 48 px next to each other, and keep
+the one you can still read at a glance. Every prompt below works in Canva
+Magic Media, ChatGPT/DALL-E, Midjourney or Firefly. Paste the **base style**
+line first, then one concept:
+
+> **Base style:** square mobile game app icon, glossy 3D casual-game
+> style, chunky rounded toy shapes, thick dark navy outlines, soft studio
+> lighting, strong soft drop shadow, vibrant saturated colours, simple
+> uncluttered background, centered, no text, no letters, no logos, no
+> border, no rounded corners, readable at very small size.
+
+**A. Escaping the jam (the core idea)**
+> Top-down 3/4 view of a tight cluster of chunky toy minibuses packed
+> nose-to-tail in blue, yellow, pink and teal. One bright red minibus is
+> breaking out of the jam toward the viewer with speed lines and a small
+> puff of dust. Light grey asphalt with yellow parking lines.
+
+**B. Puzzle board**
+> Straight-down view of a tiny square parking lot like a puzzle board,
+> 3 by 3 grid, filled with short colourful toy buses (red, blue, yellow,
+> teal) facing different directions, each with a white arrow on its roof.
+> The red bus is sliding out of the board at the top edge. Soft grey board
+> on a sky-blue background.
+
+**C. Bus with a face (character icon)**
+> Front view close-up of a cheerful red toy minibus whose headlights look
+> like big friendly eyes and whose front grille forms a wide happy smile,
+> slightly tilted, roof rack with small luggage boxes, sky-blue background
+> with a soft white glow behind it. The bus fills 85% of the frame.
+
+**D. Honk and go**
+> A chunky red toy minibus driving out of a yellow parking bay toward the
+> viewer, slight low angle, small cartoon passengers waving from the
+> windows, three yellow "honk" lines next to the horn. Bright yellow
+> background with a soft radial glow.
+
+**E. Three-bus stack**
+> Three chunky toy minibuses (red in front, blue and yellow behind)
+> stacked diagonally and overlapping like a traffic jam, isometric view,
+> bold silhouettes, bright warm yellow background, big soft shadows.
+
+**F. Round lot from above**
+> Straight-down view of a small circular parking lot ringed with green
+> grass and round bushes, packed with tiny colourful toy buses in a neat
+> pattern, one red bus driving out through a gap toward the ring road.
+> Sky-blue background.
+
+**G. Clean and bold (best at tiny sizes)**
+> A single simple red minibus seen from the side with a big white arrow
+> on its roof pointing right, flat cartoon with light glossy highlights,
+> centered on a solid bright yellow background (#FFC300), very minimal,
+> maximum contrast.
+
+**H. Jam cleared!**
+> A happy red toy minibus bursting forward from a pile of coloured buses,
+> golden coins and small stars popping out around it, confetti, bright
+> sky-blue background with a sunburst. Celebratory and energetic.
+
+**I. Mountain-town minibus**
+> A chunky red and yellow toy minibus with painted stripes and a luggage
+> rack, 3/4 front view, parked on a winding road, with soft hazy blue
+> snow-capped hills far behind and a string of plain coloured triangle
+> bunting across the top. Bright clear-morning light.
+
+**Fixes to add when something goes wrong:**
+- Too realistic: *"flat-shaded cartoon, toy-like, simple shapes, no photo
+  realism"*.
+- Too busy: *"only one main object, plain background, lots of empty space
+  around the bus"*.
+- Bus too small: *"extreme close-up, bus filling 80-90% of the frame"*.
+- Dull colours: *"high saturation, bright red bus on a contrasting
+  background"*.
+- Strange letters on the bus: *"blank windows, no writing anywhere"* (then
+  remove any leftovers with Canva's Magic Eraser).
+
+**Rules for every icon:**
+- **Google Play** masks the icon into a circle or squircle. Keep the bus
+  inside the middle ~70% so the mask doesn't cut its nose or roof off.
+- **App Store** adds its own rounded corners. Upload a full square with no
+  transparency and no rounded corners.
+- Never put "Micro Jam" or other words in the icon; the store shows the
+  name right under it.
+- Test before choosing: put 2-3 finalists in a mock row of other puzzle-game
+  icons at phone size. The one you notice first wins.
+- Later you can A/B test icons for free: Play Console > **Store listing
+  experiments** (Google Play). On iOS, **Product Page Optimization** can test
+  icons, but the alternate icons have to ship inside the app build first.
+
 ## Canva prompt: Google Play feature graphic
 
 Canva: **Create a design > Custom size 1024 x 500 px**. Magic Media prompt
@@ -157,6 +254,68 @@ Prompt if you want an AI background for these frames:
 > Soft blurred background of a sunny cartoon bus park with hazy blue
 > mountains, bright sky blue and warm yellow tones, lots of empty space,
 > casual mobile game style, no text, no people.
+
+## Gameplay videos
+
+`tools/make_videos.sh` records the real game playing itself and encodes the
+videos into `video/`. A bot taps the buses using the level solver; captions,
+tap rings and an end card are drawn on top. It uses Godot's Movie Maker, so
+every frame is smooth, the game's own sound is included, and a run gives the
+same video every time. The MP4s aren't committed to git (they're large);
+re-make them any time:
+
+```bash
+tools/make_videos.sh
+```
+
+It takes about 5 minutes and needs `ffmpeg` (`brew install ffmpeg`) plus a
+monitor tall enough for a 1920 px window (screen 1, the 4K monitor;
+`SCREEN=0 tools/make_videos.sh` picks another). Run just one with
+`tools/make_videos.sh promo` or `tools/make_videos.sh appstore`.
+
+What's in them:
+1. *(promo only)* Home route map, tap PLAY
+2. Level 42: "Tap a bus. Fill it up!", played to the win panel
+3. "Win coins, unlock buses!", Continue
+4. Level 1000's round lot: "Bigger lots, bigger jams"
+5. "Boxed in? Call the Crane!" with the Crane lifting a bus out
+6. End card: logo and buses, "Play free today!" (promo) or "Clear the jam!"
+   (App Store, because Apple doesn't allow prices in previews)
+
+To change levels, captions or pacing, edit `tools/video_director.gd` (the
+`run()` function reads top to bottom like a storyboard).
+
+### Where each video goes
+
+**Google Play: promo video**
+1. Upload `micro_jam_youtube_1920x1080.mp4` to YouTube. Make it **Public** or
+   **Unlisted** (not Private), with **ads turned off** and **not
+   age-restricted**. Otherwise it won't play on the store page.
+2. Play Console > **Grow users > Store presence > Main store listing >
+   Video**, then paste the YouTube link (`https://www.youtube.com/watch?v=...`).
+3. The video appears first in the screenshot row, and the feature graphic
+   becomes its cover with a play button. Keep the middle of the feature
+   graphic clear.
+
+**App Store: app preview**
+1. App Store Connect > your app > the version > **Previews and Screenshots >
+   iPhone 6.9" Display**.
+2. Drag in `micro_jam_appstore_886x1920.mp4`. 886 x 1920 is accepted for the
+   6.9" and 6.5" sizes. It meets Apple's rules: 15-30 s, H.264 High, 30 fps,
+   stereo AAC.
+3. Pick the **poster frame** (the still shown before it plays). A frame from
+   the first seconds of Level 42 works well. Apple takes a while to process
+   the video, sometimes a day.
+4. You can have up to 3 previews per device size. One is plenty to start.
+
+**Social (YouTube Shorts, Instagram Reels, TikTok, Facebook)**
+- Upload `micro_jam_promo_1080x1920.mp4` as is. It's vertical, 60 fps, and
+  under 60 s.
+- Add a trending sound inside the app's editor if you like. The game's own
+  audio is normalised to -16 LUFS so it mixes well.
+- Caption ideas: *"Can you clear the bus park jam?"*, *"Level 1000 be
+  like..."*, *"POV: one bus is blocking everything"*. Hashtags: #puzzle
+  #mobilegame #bus #indiegame #satisfying.
 
 ## Store listing text (draft)
 

@@ -23,7 +23,7 @@ config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "GL Compatibility")
 boot_splash/bg_color=Color(0.592, 0.788, 0.937, 1)
 boot_splash/show_image=false
-config/icon="res://icon.svg"
+config/icon="res://assets/app_icon/icon_192.png"
 
 [autoload]
 

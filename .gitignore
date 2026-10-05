@@ -5,3 +5,5 @@ build/
 *.tmp
 export_credentials.cfg
 .DS_Store
+override.cfg
+docs/store/video/*.mp4

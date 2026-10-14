@@ -41,26 +41,53 @@ var _bridges: Array = []
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	clip_contents = true
-	resized.connect(func() -> void: center_on(token_t, false))
+	resized.connect(func() -> void:
+		if not (_settle and _settle.is_running()):
+			center_on(token_t, false))
 
 
+## `animate`: the camera glides up the road to the current stop (opening the
+## app, coming back from a level, switching to Home). If a new stop was
+## unlocked, the bus token drives there too and the camera follows it.
 func refresh(animate: bool) -> void:
 	level = ProgressionManager.current_level()
 	var seen := clampi(ProgressionManager.route_seen_level(), 1, level)
 	if _token_tween:
 		_token_tween.kill()
-	if animate and seen < level:
+	if animate:
 		token_t = float(seen)
+		_glide.call_deferred(seen)
+		return
+	token_t = float(level)
+	if seen < level:
+		ProgressionManager.mark_route_seen()
+	center_on(float(level), false)
+
+
+func _glide(seen: int) -> void:
+	if size.y <= 0.0:
+		await resized
+	if _settle:
+		_settle.kill()
+	if seen < level:
+		# New stop: the token drives from the last seen stop, camera follows.
+		var dur := 0.9 + 0.15 * minf(level - seen, 6)
+		center_on(float(seen), false)
 		_token_tween = create_tween()
 		_token_tween.tween_interval(0.5)
 		_token_tween.tween_callback(AudioManager.play.bind("drive"))
-		_token_tween.tween_property(self, "token_t", float(level), 0.9 + 0.15 * minf(level - seen, 6)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_token_tween.tween_property(self, "token_t", float(level), dur).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		_token_tween.tween_callback(_arrived)
+		_settle = create_tween()
+		_settle.tween_interval(0.5)
+		_settle.tween_property(self, "scroll", _scroll_for(float(level)), dur).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	else:
+		# Start a few stops back and glide up to the current one.
 		token_t = float(level)
-		if seen < level:
-			ProgressionManager.mark_route_seen()
-	center_on(float(level), false)
+		center_on(maxf(1.0, float(level) - 4.0), false)
+		_settle = create_tween()
+		_settle.tween_interval(0.15)
+		_settle.tween_property(self, "scroll", _scroll_for(float(level)), 0.9).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 
 
 func _arrived() -> void:
@@ -85,9 +112,7 @@ func stop_pos(n: float) -> Vector2:
 
 ## Puts stop n at about 58% of the visible area.
 func center_on(n: float, animate: bool = true) -> void:
-	var view_h := size.y - top_pad - bottom_pad
-	var target := top_pad + view_h * 0.62 - world_y(n)
-	target = _clamp_scroll(target)
+	var target := _scroll_for(n)
 	if _settle:
 		_settle.kill()
 	if animate:
@@ -95,6 +120,11 @@ func center_on(n: float, animate: bool = true) -> void:
 		_settle.tween_property(self, "scroll", target, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	else:
 		scroll = target
+
+
+func _scroll_for(n: float) -> float:
+	var view_h := size.y - top_pad - bottom_pad
+	return _clamp_scroll(top_pad + view_h * 0.62 - world_y(n))
 
 
 func _clamp_scroll(v: float) -> float:

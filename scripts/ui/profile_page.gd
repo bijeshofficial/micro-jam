@@ -49,6 +49,7 @@ func build() -> void:
 	list.add_child(rib)
 	for a in AchievementManager.definitions():
 		list.add_child(_achievement_card(a))
+	UIKit.pass_touches(list)
 
 
 func _card(kind: String = "blue") -> PanelContainer:

@@ -29,14 +29,15 @@ What's been checked:
 | Level | Buses | Colours | Lot | Comes in |
 |---|---|---|---|---|
 | 1 | 3 | 2 | 4 x 5 | tutorial |
-| 10 | 8 | 3 | 5 x 6 | Crane (L6), Extra Bay (L8) |
+| 10 | 8 | 3 | 5 x 6 | Crane (L6, a hand-made round lot where four buses box each other in), Extra Bay (L8) |
 | 30 | 14 | 5 | 6 x 7 | Shuffle (L12), sleeping drivers (L15), roadwork cones (L30) |
 | 60 | 18 | 6 | 7 x 8 | umbrella passengers (L50), **shaped lots** start |
 | 100 | 21 | 7 | 8 x 9 | tunnel (L80) |
+| 150 | 24 | 7 | 9 x 10 | mystery buses (L110), padlocks (L140) |
 | 200 | 27 | 8 | 9 x 10 | |
 | 350 | 33 | 8 | 9 x 11 | |
 | 600 | 39 | 8 | 10 x 12 | |
-| 1000+ | ~42 (max) | 8 | 10 x 12 | everything mixed |
+| 1000+ | ~42-50 (with taxis) | 8 | 10 x 12 | everything mixed |
 
 **Shaped lots.** From level 60, about 4 in 10 levels use a round, octagon,
 diamond or cross-shaped lot instead of a rectangle. The cells outside the
@@ -44,8 +45,9 @@ shape are grass with bushes, and buses leaving the shape drive straight across
 the grass to the ring road. Shaped lots hold fewer buses than a rectangle of
 the same size (about 33-36 at 10 x 12).
 
-**The maximum.** A 10 x 12 rectangle holds about 42 buses (`max_buses` in
-`data/difficulty.json` is 45; the lot's size caps it first). The limit is
+**The maximum.** A 10 x 12 rectangle holds about 42 buses, or about 50
+vehicles once taxis are mixed in (`max_buses` in `data/difficulty.json` is
+56; the lot's size caps it first). The limit is
 the screen, not the generator. At 10 x 12 a bus is about 66 px wide on a
 1080 x 1920 phone, still tappable because taps snap to the nearest bus. On
 taller 19.5:9 phones it's about 90 px. Going much past ~45 buses (12 x 14
@@ -78,6 +80,59 @@ Measured on generated levels:
 | SUPER HARD | 0.62 | 0.71 |
 
 Lower these targets (or the windows) to make the game easier overall.
+
+### Taxis
+
+From level 40, small **taxis** (1 cell, 2 seats) start replacing some
+microbuses: about 15% of vehicles by level 60, 25% by level 200 and 30%
+from level 350 (`small` in each `ramp` row of `data/difficulty.json`). The
+lot stays as full as before, so a level holds more vehicles: around 50 at
+the top end instead of 42 (`max_buses` is 56; the solver tracks up to 63).
+Taxis fill up fast, so they're handy for clearing a colour quickly, but each
+still takes a whole bay. A one-time intro card appears the first time
+they show up.
+
+Many small vehicles made levels much harder in testing: taxis can usually
+drive out early and then sit in a bay waiting for their colour. Three
+settings keep taxi levels as fair as the old ones (measured on levels
+500-600, the normal tier fails 46% of the time either way):
+- `taxi_bay_from` (0.2): lots where at least 20% of vehicles are taxis get
+  a 6th loading bay.
+- `taxi_color_cut` (10): those levels use fewer colours (3 fewer at a 30%
+  taxi share), so each passenger has more vehicles that can take them.
+- `taxi_refill` (1.0): how much the lot is refilled with extra vehicles
+  (0 = same vehicle count as without taxis, 1 = same fullness).
+A taxi's two passengers also stand together in the line.
+
+### The twists
+
+| Twist | From | What it does |
+|---|---|---|
+| Sleeping driver | L15 | First tap wakes the driver, the second drives. |
+| Roadwork cones | L30 | Cones block cells until 3 buses have left the lot. |
+| Umbrellas | L50 | Some passengers hide their colour until they reach the front. |
+| Tunnel | L80 | Buses roll out of a tunnel one at a time, in a fixed order. |
+| Mystery buses | L110 | Grey "?" buses hide their colour until the way in front of them is clear. You plan with partial information. |
+| Padlocks | L140 | A padlocked bus can't drive until a full bus of the padlock's colour has left. It ties the passenger line to the lot: which colour you fill first matters. |
+
+Each twist shows a one-screen intro card the first time, and then appears on
+about half the levels. A level never has more than 3 twists at once
+(`max_twists` in `data/difficulty.json`), so it stays readable. The
+generator only places a padlock where its stored solution already has a bus
+of that colour leaving earlier, and the solver re-checks every level.
+
+**Level 6 (the Crane lesson)** is placed by hand in
+`data/levels_authored.json` (`"handmade": true`, so `tools/author_levels.gd`
+keeps it). Four big buses on a round lot each block the next, so tapping
+alone can never win. Once the two free buses have gone, the hand shows the
+Crane, then a boxed-in bus. The smoke test plays every possible sequence to
+check it can't be won without the Crane and can't be lost with it.
+
+**Daily Jam** is always a big shaped lot (round, octagon, diamond or cross,
+picked by the date) built at the size of level 220 or the player's level,
+whichever is higher. It stays fair for newer players: fewer colours, a few
+fewer buses, only twists they've already met, and the easier target.
+`--daily` on the generator test checks 30 days for several player levels.
 
 On top of the ramp there's a sawtooth rhythm. Every 5th level is **HARD**
 (+50% coins) and every 10th is **SUPER HARD** (x2 coins), and the level after
@@ -136,7 +191,6 @@ understands them), `level_generator.gd` (placement) and
 `tests/smoke_test.gd`.
 
 ## Ideas worth adding next
-- A **daily puzzle**: seed a level from the date, the same for everyone that day.
 - **Region chapters**: every 50 levels, change the backdrop town and the
   route-map scenery so long-term players see their progress.
 - **Hand-tuned milestone levels** (every 50th) using option 3, as showpieces.

@@ -3,6 +3,7 @@ extends SceneTree
 ## bounded solver within its node budget. Also checks determinism and that
 ## difficulty follows the rhythm (SUPER HARD > normal > easy on average).
 ##   godot --headless --path . --script res://tests/generator_test.gd [-- --from=21 --to=400]
+##   ... -- --daily   checks 30 days of Daily Jams for new, mid and veteran players
 ## Exit code 0 on success.
 
 const BUDGET := 20000
@@ -11,6 +12,9 @@ const BUDGET := 20000
 func _initialize() -> void:
 	var from := 21
 	var to := 400
+	if OS.get_cmdline_user_args().has("--daily"):
+		_daily.call_deferred()
+		return
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--from="):
 			from = int(a.substr(7))
@@ -69,3 +73,44 @@ func _initialize() -> void:
 	else:
 		print("GENERATOR TEST FAILED (%d problems)" % bad.size())
 		quit(1)
+
+
+## Daily Jams: always a shaped big lot, solvable, only twists the player has
+## met, and gentler for newer players.
+func _daily() -> void:
+	await process_frame
+	GameData.preload_all()
+	var dm: Node = root.get_node("DailyManager")
+	var twists: Dictionary = GameData.difficulty()["twists"]
+	var bad: Array = []
+	for player in [1, 12, 40, 90, 150, 500]:
+		var fails: Array = []
+		var buses := 0
+		var shapes := {}
+		for day in 30:
+			var key := "2026-11-%02d" % (day + 1)
+			var p: Dictionary = dm.challenge_params(player, key)
+			var lvl := LevelGenerator.generate_with(p, hash("micro-jam/daily-jam/" + key))
+			if lvl.is_empty():
+				bad.append("player %d %s: generation failed" % [player, key])
+				continue
+			if String(p["shape"]) == "rect":
+				bad.append("player %d %s: not a shaped lot" % [player, key])
+			shapes[p["shape"]] = int(shapes.get(p["shape"], 0)) + 1
+			for t in p["twists"]:
+				if player < int(twists[t]["from"]):
+					bad.append("player %d %s: unknown twist %s" % [player, key, t])
+			var r := ParkSolver.solve(lvl, BUDGET)
+			if not bool(r["solvable"]):
+				bad.append("player %d %s: not solvable" % [player, key])
+			fails.append(float(lvl["fail_rate"]))
+			buses += (lvl["buses"] as Array).size()
+		var avg := 0.0
+		for f in fails:
+			avg += float(f)
+		avg /= maxf(1.0, fails.size())
+		print("player L%d: avg %.1f buses, avg fail rate %.2f, shapes %s" % [player, float(buses) / 30.0, avg, shapes])
+	for b in bad:
+		print("FAIL: ", b)
+	print("DAILY JAM TEST %s" % ("PASSED" if bad.is_empty() else "FAILED (%d problems)" % bad.size()))
+	quit(0 if bad.is_empty() else 1)

@@ -38,7 +38,16 @@ static func level_seed(level: int) -> int:
 
 
 ## Interpolated ramp values plus the tier's adjustments for `level`.
-static func params_for(level: int) -> Dictionary:
+## `force_shape` ("round", "octagon", ...) gives the level that lot shape
+## no matter what the level number would pick (the Daily Jam uses it).
+## Placement weight for a taxi sitting in another bus's exit path (buses: 3).
+const TAXI_BLOCK_WEIGHT := 0.5
+
+## Every twist, in the order they're introduced.
+const TWISTS := ["sleep", "cones", "covered", "tunnel", "mystery", "padlock"]
+
+
+static func params_for(level: int, force_shape: String = "") -> Dictionary:
 	var cfg := GameData.difficulty()
 	var ramp: Array = cfg["ramp"]
 	var lo: Dictionary = ramp[0]
@@ -65,6 +74,7 @@ static func params_for(level: int) -> Dictionary:
 		"buses": int(round(lerp_key.call("buses"))) + int(tc.get("bus_delta", 0)) + rng.randi_range(0, int(cfg.get("bus_jitter", 1))),
 		"colors": int(round(lerp_key.call("colors"))) + int(tc.get("color_delta", 0)),
 		"big": float(lerp_key.call("big")),
+		"small": float(lerp_key.call("small")) if lo.has("small") and hi.has("small") else 0.0,
 		"window": int(round(lerp_key.call("window"))) + int(tc.get("window_delta", 0)),
 		"bays": Park.DEFAULT_BAYS,
 		"twists": [],
@@ -72,27 +82,48 @@ static func params_for(level: int) -> Dictionary:
 	# Big levels may get a shaped lot (round, octagon, diamond, plus).
 	var sh: Dictionary = cfg.get("shapes", {})
 	p["shape"] = "rect"
-	if not sh.is_empty() and level >= int(sh.get("from", 60)) and rng.randf() < float(sh.get("chance", 0.4)):
+	var shaped := not sh.is_empty() and level >= int(sh.get("from", 60)) and rng.randf() < float(sh.get("chance", 0.4))
+	if shaped or force_shape != "":
 		var list: Array = sh.get("list", ["round"])
-		p["shape"] = String(list[rng.randi() % list.size()])
+		p["shape"] = force_shape if force_shape != "" else String(list[rng.randi() % list.size()])
 		p["w"] = int(p["w"]) + int(sh.get("grow", 1))
 		p["h"] = int(p["h"]) + int(sh.get("grow", 1))
 	p["w"] = clampi(int(p["w"]), 4, int(cfg.get("max_w", 10)))
 	p["h"] = clampi(int(p["h"]), 5, int(cfg.get("max_h", 12)))
 	# A lot never gets fuller than this share of its parking cells.
 	var cells := LotShape.count(int(p["w"]), int(p["h"]), String(p["shape"]))
-	var cap := int(float(cells) * float(cfg.get("max_fill", 0.82)) / (2.0 + float(p["big"])))
+	# Taxis (1 cell) take the place of some microbuses: keep the lot as full
+	# as before, which means more vehicles.
+	var avg_len := 2.0 + float(p["big"]) - float(p["small"])
+	var refill := float(cfg.get("taxi_refill", 1.0))   # 0 = same count, 1 = same fill
+	p["buses"] = int(round(float(p["buses"]) * lerpf(1.0, (2.0 + float(p["big"])) / avg_len, refill)))
+	var cap := int(float(cells) * float(cfg.get("max_fill", 0.82)) / avg_len)
 	p["buses"] = clampi(int(p["buses"]), 3, mini(cap, int(cfg.get("max_buses", 26))))
+	# Taxis turn the passenger line over fast (2 seats each), which makes
+	# every arrival matter more; fewer colours give each passenger more
+	# vehicles that can take them.
+	p["colors"] = int(p["colors"]) - int(round(float(p["small"]) * float(cfg.get("taxi_color_cut", 0.0))))
 	p["colors"] = clampi(int(p["colors"]), 2, mini(COLOR_COUNT, int(p["buses"])))
 	p["window"] = clampi(int(p["window"]), 1, 3)
+	# Lots with lots of taxis get a 6th loading bay: taxis can usually drive
+	# out early, and each one still needs a bay until its colour comes up.
+	if float(p["small"]) >= float(cfg.get("taxi_bay_from", 0.2)):
+		p["bays"] = Park.DEFAULT_BAYS + 1
 	var twists: Dictionary = cfg["twists"]
 	var chance := float(cfg.get("twist_chance", 0.5))
-	for id in ["sleep", "cones", "covered", "tunnel"]:
+	for id in TWISTS:
 		var from := int(twists[id]["from"])
 		if level < from:
 			continue
 		if level == from or rng.randf() < chance:
 			(p["twists"] as Array).append(id)
+	# At most `max_twists` at once so a level stays readable; a twist being
+	# introduced on this exact level always keeps its place.
+	var most := int(cfg.get("max_twists", 3))
+	var list: Array = p["twists"]
+	while list.size() > most:
+		var drop: Array = list.filter(func(t: String) -> bool: return level != int(twists[t]["from"]))
+		list.erase(drop[rng.randi() % drop.size()])
 	return p
 
 
@@ -234,9 +265,13 @@ static func _try_build(rng: RandomNumberGenerator, p: Dictionary) -> Dictionary:
 	var placed: Array = []   # index = exit order
 	placed.resize(n)
 	var big := float(p["big"])
+	var small := float(p.get("small", 0.0))
 	for i in range(n - 1, -1, -1):
 		var want_len := 3 if rng.randf() < big else 2
+		if small > 0.0 and want_len == 2 and rng.randf() < small / maxf(0.05, 1.0 - big):
+			want_len = 1
 		if tunnel_idx.has(i):
+			want_len = maxi(want_len, 2)
 			var sp := Park.tunnel_spawn(tunnel, want_len, w, h)
 			placed[i] = {"len": want_len, "x": int(sp["x"]), "y": int(sp["y"]), "dir": int(sp["dir"]), "tunnel": true}
 			continue
@@ -246,7 +281,10 @@ static func _try_build(rng: RandomNumberGenerator, p: Dictionary) -> Dictionary:
 		for k in w * h:
 			if grid[k] == Park.EMPTY:
 				free_cells.append(k)
-		for length in [want_len, 5 - want_len]:
+		var lengths: Array = [1, 2] if want_len == 1 else [want_len, 5 - want_len]
+		if small > 0.0 and want_len != 1:
+			lengths.append(1)
+		for length in lengths:
 			# Random samples first (fast on big lots); a full scan if none fit.
 			for t in SAMPLES:
 				if free_cells.is_empty():
@@ -337,11 +375,15 @@ static func _try_build(rng: RandomNumberGenerator, p: Dictionary) -> Dictionary:
 	while head < n or not active.is_empty():
 		while active.size() < window and head < n:
 			var b: Dictionary = bus_list[solution[head]]
-			active.append([int(b["color"]), Park.capacity_for(int(b["len"]))])
+			active.append([int(b["color"]), Park.capacity_for(int(b["len"])), Park.capacity_for(int(b["len"]))])
 			head += 1
 		var pick := 0 if rng.randf() < 0.45 else rng.randi() % active.size()
 		queue.append(int(active[pick][0]))
 		active[pick][1] = int(active[pick][1]) - 1
+		# A taxi's two passengers stand together in the line.
+		if int(active[pick][1]) == 1 and int(active[pick][2]) == 2:
+			queue.append(int(active[pick][0]))
+			active[pick][1] = 0
 		if int(active[pick][1]) <= 0:
 			active.remove_at(pick)
 
@@ -351,6 +393,13 @@ static func _try_build(rng: RandomNumberGenerator, p: Dictionary) -> Dictionary:
 		for qi in range(1, queue.size()):
 			if rng.randf() < ratio:
 				covered.append(qi)
+
+	# Mystery buses: some buses boxed in at the start hide their colour.
+	if twists.has("mystery"):
+		_place_mystery(bus_list, w, h, cones, tunnel, shape, int(tw["mystery"].get("max", 4)), rng)
+	# Padlocks: a bus waits for a full bus of the padlock's colour to leave.
+	if twists.has("padlock"):
+		_place_padlocks(bus_list, solution, queue, w, h, cones, cone_clear, tunnel, shape, int(p.get("bays", Park.DEFAULT_BAYS)), int(tw["padlock"].get("max", 2)), rng)
 
 	var lvl := {
 		"level": int(p["level"]),
@@ -365,7 +414,7 @@ static func _try_build(rng: RandomNumberGenerator, p: Dictionary) -> Dictionary:
 		"tunnel": tunnel,
 		"shape": shape,
 		"holes": LotShape.holes(w, h, shape),
-		"twists": _present_twists(twists, cones, tunnel, covered),
+		"twists": _present_twists(twists, cones, tunnel, covered, bus_list),
 		"solution": solution,
 	}
 	var run := ParkSolver.lazy_run(lvl, solution)
@@ -394,8 +443,11 @@ static func _score_place(grid: PackedInt32Array, path_count: PackedInt32Array, w
 		if v != Park.HOLE:
 			inner += 1
 	var score := 0.0
+	# Taxis fit anywhere, so they'd wedge into every exit path: reward that
+	# less for them, or levels with taxis turn into knots.
+	var block_w := 3.0 if length > 1 else TAXI_BLOCK_WEIGHT
 	for c in cs:
-		score += 3.0 * path_count[c.y * w + c.x]
+		score += block_w * path_count[c.y * w + c.x]
 		for d in Park.DIRS:
 			var nb: Vector2i = c + d
 			if nb.x >= 0 and nb.y >= 0 and nb.x < w and nb.y < h and grid[nb.y * w + nb.x] >= 0:
@@ -405,9 +457,16 @@ static func _score_place(grid: PackedInt32Array, path_count: PackedInt32Array, w
 	return score + rng.randf() * 3.0
 
 
-static func _present_twists(twists: Array, cones: Array, tunnel: Dictionary, covered: Array) -> Array:
+static func _present_twists(twists: Array, cones: Array, tunnel: Dictionary, covered: Array, bus_list: Array = []) -> Array:
 	var out: Array = []
+	var has_mystery := bus_list.any(func(b: Dictionary) -> bool: return bool(b.get("mystery", false)))
+	var has_lock := bus_list.any(func(b: Dictionary) -> bool: return int(b.get("lock", -1)) >= 0)
+	var has_taxi := bus_list.any(func(b: Dictionary) -> bool: return int(b.get("len", 2)) == 1)
 	for t in twists:
+		if t == "mystery" and not has_mystery:
+			continue
+		if t == "padlock" and not has_lock:
+			continue
 		if t == "cones" and cones.is_empty():
 			continue
 		if t == "tunnel" and tunnel.is_empty():
@@ -415,6 +474,9 @@ static func _present_twists(twists: Array, cones: Array, tunnel: Dictionary, cov
 		if t == "covered" and covered.is_empty():
 			continue
 		out.append(t)
+	# Taxis aren't a random twist, but get an intro card the first time.
+	if has_taxi:
+		out.append("taxi")
 	return out
 
 
@@ -424,3 +486,65 @@ static func _shuffle(a: Array, rng: RandomNumberGenerator) -> void:
 		var t: Variant = a[i]
 		a[i] = a[j]
 		a[j] = t
+
+
+static func _scratch_park(bus_list: Array, queue: Array, w: int, h: int, cones: Array, cone_clear: int, tunnel: Dictionary, shape: String, bays: int) -> Park:
+	var p := Park.new()
+	p.load_dict({
+		"w": w, "h": h, "buses": bus_list, "queue": queue, "cones": cones, "cone_clear": cone_clear,
+		"tunnel": tunnel, "shape": shape, "holes": LotShape.holes(w, h, shape), "bay_count": bays,
+	})
+	return p
+
+
+## Hides the colour of up to `most` buses that are boxed in at the start
+## (regular lot buses, not sleeping). Rules don't change, only what you see.
+static func _place_mystery(bus_list: Array, w: int, h: int, cones: Array, tunnel: Dictionary, shape: String, most: int, rng: RandomNumberGenerator) -> void:
+	var p := _scratch_park(bus_list, [], w, h, cones, 99, tunnel, shape, Park.DEFAULT_BAYS)
+	var pool: Array = []
+	for b in bus_list:
+		var id := int(b["id"])
+		if b["state"] == "lot" and not bool(b["sleep"]) and bool(p.blocker(id)["blocked"]):
+			pool.append(id)
+	var k := rng.randi_range(2, maxi(2, most))
+	for j in mini(k, pool.size()):
+		var id: int = pool.pop_at(rng.randi() % pool.size())
+		bus_list[id]["mystery"] = true
+
+
+## Puts up to `most` padlocks on buses so the stored solution still works:
+## replays the solution and only locks bus X with colour K when a bus of
+## colour K has already filled up and left before X is due to drive out.
+static func _place_padlocks(bus_list: Array, solution: Array, queue: Array, w: int, h: int, cones: Array, cone_clear: int, tunnel: Dictionary, shape: String, bays: int, most: int, rng: RandomNumberGenerator) -> void:
+	var p := _scratch_park(bus_list, queue, w, h, cones, cone_clear, tunnel, shape, bays)
+	var departed_before: Array = []   # step -> colours departed before that exit
+	var gone_colors: Array = []
+	for id in solution:
+		departed_before.append(gone_colors.duplicate())
+		var guard := 0
+		while p.bus(int(id))["state"] == "lot" or p.bus(int(id))["state"] == "tunnel":
+			guard += 1
+			if guard > 4:
+				return
+			for e in p.tap(int(id)):
+				if String(e["type"]) == "depart":
+					var c := int(p.bus(int(e["bus"]))["color"])
+					if not gone_colors.has(c):
+						gone_colors.append(c)
+	var cands: Array = []
+	var tunnel_ids: Array = tunnel.get("order", []) if not tunnel.is_empty() else []
+	for step in range(2, solution.size()):
+		var id := int(solution[step])
+		var b: Dictionary = bus_list[id]
+		if bool(b["sleep"]) or tunnel_ids.has(id) or (departed_before[step] as Array).is_empty():
+			continue
+		cands.append([id, departed_before[step]])
+	var k := rng.randi_range(1, maxi(1, most))
+	for j in mini(k, cands.size()):
+		var pick: Array = cands.pop_at(rng.randi() % cands.size())
+		var colors: Array = pick[1]
+		# Prefer a colour other than the bus's own, so the lock reads clearly.
+		var own := int(bus_list[int(pick[0])]["color"])
+		var other := colors.filter(func(c: int) -> bool: return c != own)
+		var pool: Array = other if not other.is_empty() else colors
+		bus_list[int(pick[0])]["lock"] = int(pool[rng.randi() % pool.size()])

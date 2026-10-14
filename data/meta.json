@@ -7,7 +7,7 @@
 		{"id": "purple", "name": "Purple", "hex": "8e44ad"},
 		{"id": "orange", "name": "Orange", "hex": "ff7f11"},
 		{"id": "pink", "name": "Pink", "hex": "ff5fa2"},
-		{"id": "teal", "name": "Teal", "hex": "12b5b0"}
+		{"id": "brown", "name": "Brown", "hex": "7a4a28"}
 	],
 	"towns": ["Juneli Pul", "Chiya Danda", "Momo Chowk", "Phoolpati", "Hawa Ghat", "Tara Tole", "Badal Bazaar", "Himal Gaun", "Mithopani", "Suntala Besi", "Kuhiro Kot", "Rato Pul", "Dhunge Dhara", "Ghumti Mod", "Lali Gurans Tar", "Sano Bazaar"],
 	"bus_names": ["Mero Gadi", "Sathi", "Ramailo", "Hawa Jahaj", "Chito Chito", "Sundar", "Pahad Rani", "Junkiri", "Bato Raja", "Jhilimili", "Dhanyabad", "Ghumphir"],

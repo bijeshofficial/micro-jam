@@ -91,11 +91,24 @@ static func notes(freqs: Array, step: float, dur: float, vol: float, wave: Strin
 	return out
 
 
+## Extra samples after the sound's end. Godot 4.7's WAV mixer reads one
+## sample past `loop_end` when it wraps a loop, and the data has no padding
+## of its own: when the buffer ends on a memory page boundary (it did for the
+## 18 s music loop on a Blackview tablet) that read crashes the app in the
+## audio thread. For a loop the pad repeats the start, so the wrap stays
+## seamless; for a one-shot it is silence.
+const TAIL_PAD := 8
+
+
 static func to_stream(samples: PackedFloat32Array, loop: bool = false, rate: int = RATE) -> AudioStreamWAV:
+	var n := samples.size()
 	var bytes := PackedByteArray()
-	bytes.resize(samples.size() * 2)
-	for i in samples.size():
+	bytes.resize((n + TAIL_PAD) * 2)
+	for i in n:
 		bytes.encode_s16(i * 2, int(clampf(samples[i], -1.0, 1.0) * 32000.0))
+	for i in TAIL_PAD:
+		var s := samples[i % n] if loop and n > 0 else 0.0
+		bytes.encode_s16((n + i) * 2, int(clampf(s, -1.0, 1.0) * 32000.0))
 	var w := AudioStreamWAV.new()
 	w.format = AudioStreamWAV.FORMAT_16_BITS
 	w.mix_rate = rate

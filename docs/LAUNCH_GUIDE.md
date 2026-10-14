@@ -21,8 +21,8 @@ Tell me when you've updated the file and I'll pick up the next items.
 | Privacy policy | https://www.neuronnest.com/micro-jam/privacy (page is ready in the neuron-nest repo, section 3) |
 | app-ads.txt | https://www.neuronnest.com/app-ads.txt (already live; covers every app on the account) |
 | AdMob publisher | `pub-7387045424284544` (same account as Aksyatra) |
-| AdMob app IDs | Android `ca-app-pub-…~…` · iOS `ca-app-pub-…~…` (you create them, section 2) |
-| Rewarded ad units | Android `ca-app-pub-…/…` · iOS `ca-app-pub-…/…` (you create them, section 2) |
+| AdMob app IDs | Android `ca-app-pub-7387045424284544~8590794629` · iOS `ca-app-pub-7387045424284544~4227123765` |
+| Rewarded ad units | Android `ca-app-pub-7387045424284544/3510692483` · iOS `ca-app-pub-7387045424284544/5624975070` |
 | Support email | info@neuronnest.com |
 | Version | 1.0.0 (version code 1) |
 
@@ -190,15 +190,15 @@ every rewarded button and decides the reward itself.
 > **Never tap your own live ads.** AdMob can suspend the account for it.
 > Debug builds use Google's test ads automatically, so they're always safe.
 
-### 2.6 Send me the 4 IDs
-- [ ] Paste them in chat, for example:
+### 2.6 Send me the 4 IDs (done)
+- [x] Paste them in chat, for example:
   ```
   Android app ID:      ca-app-pub-7387045424284544~...
   Android rewarded ID: ca-app-pub-7387045424284544/...
   iOS app ID:          ca-app-pub-7387045424284544~...
   iOS rewarded ID:     ca-app-pub-7387045424284544/...
   ```
-- [ ] (Claude) I put them in the two places the game reads them from:
+- [x] (Claude) I put them in the two places the game reads them from:
   - `data/ads.json` → `app_ids` and `ad_units`
   - `project.godot` → `[admob]` `general/android/app_id` and
     `general/ios/app_id` (the plugin writes these into the Android manifest
@@ -207,7 +207,8 @@ every rewarded button and decides the reward itself.
   If you'd rather do it yourself, those are the only two files. Each value
   replaces an `XXXX` placeholder or one of Google's test IDs (the ones
   containing `3940256099942544`). The release build script checks for
-  leftovers.
+  leftovers, and that the Android app ID in `project.godot` matches
+  `data/ads.json`.
 
 ---
 
@@ -398,6 +399,18 @@ are done.
   - Release notes:
     `First test build: please play a few levels and tell us what you think!`
   - **Next** → fix any errors it lists → **Save**
+  - The warning "contains native code … not uploaded debug symbols" is only a
+    warning. To get readable engine crash reports, upload
+    `build/android/native-debug-symbols.zip` (335 MB, function names plus file
+    and line numbers; if it's too big, use `native-debug-symbols-small.zip`,
+    58 MB, function names only): **App bundle explorer** → pick the version →
+    **Downloads** tab → **Native debug symbols** → upload. Every Micro Jam
+    build made with Godot 4.7.2 uses the same engine binary, so the same zip
+    works for each new release (a copy stays in
+    `~/Library/Caches/godot-symbols/`). After a Godot upgrade, download
+    `Godot_native_debug_symbols.<version>.stable.template_release.android.zip`
+    from the godotengine/godot-builds GitHub release and keep only the
+    `arm64-v8a` and `armeabi-v7a` folders.
 - [ ] **Publishing overview** → **Send changes for review**. The first review
   usually takes a few hours to 3 days.
 - [ ] Once approved, copy the **opt-in link** (Testers tab → "How testers join

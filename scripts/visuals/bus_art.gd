@@ -21,12 +21,14 @@ const TYRE := Color("2b2b30")
 const CHROME := Color("e9eef2")
 const LIGHT := Color("fff3b0")
 const OUTLINE := Color("1f2433")
+## Mystery buses are drawn in this grey until their colour is revealed.
+const MYSTERY := Color("9aa3b5")
 const SKIN := [Color("c98b5e"), Color("d9a07a"), Color("b87a50"), Color("e0ae84")]
 
 
 static func footprint(center: Vector2, cell: float, length: int, dir: int) -> Rect2:
-	var lw := cell * 0.78
-	var ll := cell * (float(length) - 0.14)
+	var lw := cell * (0.7 if length == 1 else 0.78)
+	var ll := cell * (0.86 if length == 1 else float(length) - 0.14)
 	var sz := Vector2(lw, ll) if dir == 0 or dir == 2 else Vector2(ll, lw)
 	return Rect2(center - sz * 0.5, sz)
 
@@ -37,6 +39,12 @@ static func body_height(cell: float) -> float:
 
 
 static func draw_bus(ci: CanvasItem, center: Vector2, cell: float, length: int, dir: int, color: Color, opts: Dictionary = {}) -> void:
+	var mystery := bool(opts.get("mystery", false))
+	if mystery:
+		color = MYSTERY
+	if length == 1:
+		_draw_taxi(ci, center, cell, dir, color, opts)
+		return
 	var fp := footprint(center, cell, length, dir)
 	var hgt := body_height(cell)
 	var lift := float(opts.get("lift", 0.0))
@@ -58,14 +66,20 @@ static func draw_bus(ci: CanvasItem, center: Vector2, cell: float, length: int, 
 	var roof := Rect2(fp.position + up, fp.size)
 	var roof_pts := DrawKit.rounded_rect(roof, r, 6)
 	DrawKit.gradient_fill(ci, roof_pts, color.lightened(0.22), color.lerp(side, 0.15))
-	_livery(ci, roof, cell, length, dir, color, opts)
+	if not mystery:
+		_livery(ci, roof, cell, length, dir, color, opts)
 	_windscreen(ci, roof, cell, dir, color, opts)
 	if int(opts.get("seats", 0)) > 0:
 		_seats(ci, roof, cell, length, dir, opts)
 	elif bool(opts.get("arrow", true)):
 		_arrow(ci, roof, cell, dir)
-	if length >= 3:
+	var marked := mystery or opts.has("lock")
+	if length >= 3 and not marked:
 		_rack(ci, roof, cell, dir)
+	if mystery:
+		_mystery_mark(ci, roof, cell, dir, length, opts.has("lock"))
+	if opts.has("lock"):
+		_padlock(ci, _back_spot(roof, cell, dir), cell, opts["lock"])
 	# Gloss along the roof's top edge.
 	var gl := Rect2(roof.position + Vector2(cell * 0.08, cell * 0.05), Vector2(roof.size.x - cell * 0.16, cell * 0.09))
 	if gl.size.x > 4:
@@ -238,6 +252,45 @@ static func _arrow(ci: CanvasItem, roof: Rect2, cell: float, dir: int) -> void:
 	DrawKit.outline(ci, pts, Color(0, 0, 0, 0.18), 2.0)
 
 
+## A point on the roof towards the back (where the rack sits on big buses).
+static func _back_spot(roof: Rect2, cell: float, dir: int) -> Vector2:
+	var a := _along(dir)
+	var half_len := (roof.size.y if dir == 0 or dir == 2 else roof.size.x) * 0.5
+	return roof.get_center() - a * maxf(cell * 0.28, half_len - cell * 0.3)
+
+
+## A "?" badge on a mystery bus (towards the front if a padlock takes the back).
+static func _mystery_mark(ci: CanvasItem, roof: Rect2, cell: float, dir: int, length: int, has_lock: bool) -> void:
+	var p := _back_spot(roof, cell, dir)
+	if has_lock:
+		p = roof.get_center() + _along(dir) * cell * 0.3 * float(length - 1)
+	_mystery_badge(ci, p, cell)
+
+
+static func _mystery_badge(ci: CanvasItem, p: Vector2, cell: float) -> void:
+	var r := cell * 0.2
+	ci.draw_circle(p, r + 3.0, OUTLINE, true, -1.0, true)
+	ci.draw_circle(p, r, Color("ffffff"), true, -1.0, true)
+	var f := UIKit.font(true)
+	var fs := int(cell * 0.32)
+	var tw := f.get_string_size("?", HORIZONTAL_ALIGNMENT_LEFT, -1, fs)
+	ci.draw_string(f, p + Vector2(-tw.x * 0.5, fs * 0.36), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color("5b6478"))
+
+
+## A padlock in the colour that opens it.
+static func _padlock(ci: CanvasItem, p: Vector2, cell: float, col: Color) -> void:
+	var bw := cell * 0.42
+	var bh := cell * 0.32
+	var body := Rect2(p - Vector2(bw * 0.5, bh * 0.3), Vector2(bw, bh))
+	# Shackle.
+	ci.draw_arc(p - Vector2(0, bh * 0.3), bw * 0.3, PI, TAU, 14, OUTLINE, cell * 0.1, true)
+	ci.draw_arc(p - Vector2(0, bh * 0.3), bw * 0.3, PI, TAU, 14, CHROME, cell * 0.055, true)
+	ci.draw_colored_polygon(DrawKit.rounded_rect(body.grow(3.0), cell * 0.07, 3), OUTLINE)
+	DrawKit.gradient_fill(ci, DrawKit.rounded_rect(body, cell * 0.06, 3), col.lightened(0.25), col.darkened(0.15))
+	ci.draw_circle(body.get_center() - Vector2(0, bh * 0.08), cell * 0.04, OUTLINE, true, -1.0, true)
+	ci.draw_line(body.get_center(), body.get_center() + Vector2(0, bh * 0.25), OUTLINE, cell * 0.035, true)
+
+
 static func _rack(ci: CanvasItem, roof: Rect2, cell: float, dir: int) -> void:
 	# Roof luggage on big buses, near the back.
 	var a := _along(dir)
@@ -285,3 +338,77 @@ static func _zzz(ci: CanvasItem, roof: Rect2, cell: float, time: float) -> void:
 		var col := Color(1, 1, 1, 1.0 - ph)
 		ci.draw_string_outline(f, p, "z", HORIZONTAL_ALIGNMENT_LEFT, -1, fs, 6, Color(0.12, 0.15, 0.35, 1.0 - ph))
 		ci.draw_string(f, p, "z", HORIZONTAL_ALIGNMENT_LEFT, -1, fs, col)
+
+
+## A taxi: one cell, two seats. Windscreen, a big direction arrow on the
+## roof (with a "?" or padlock behind it), rear window.
+static func _draw_taxi(ci: CanvasItem, center: Vector2, cell: float, dir: int, color: Color, opts: Dictionary) -> void:
+	var fp := footprint(center, cell, 1, dir)
+	var hgt := cell * 0.2
+	var lift := float(opts.get("lift", 0.0))
+	var r := cell * 0.18
+	if bool(opts.get("shadow", true)):
+		var so := Vector2(cell * 0.07, cell * 0.1) * (1.0 + lift * 2.5)
+		ci.draw_colored_polygon(DrawKit.rounded_rect(Rect2(fp.position + so - Vector2(2, 2), fp.size + Vector2(4, 4)), r, 6), Color(0.1, 0.08, 0.15, 0.32 * (1.0 - lift * 0.5)))
+	var up := Vector2(0, -hgt - lift * cell * 0.6)
+	var a := _along(dir)
+	var across := Vector2(-a.y, a.x)
+	var half_len := cell * 0.43
+	var half_w := cell * 0.35
+	# Wheels just poking out at the four corners.
+	for u in [-0.62, 0.62]:
+		for v in [-1.0, 1.0]:
+			var wc: Vector2 = center + up * 0.4 + a * half_len * u + across * half_w * v * 1.02
+			var wr := Rect2(wc - Vector2(cell * 0.07, cell * 0.07), Vector2(cell * 0.14, cell * 0.14))
+			ci.draw_colored_polygon(DrawKit.rounded_rect(wr, cell * 0.04, 2), TYRE)
+	var body := Rect2(fp.position + up, Vector2(fp.size.x, fp.size.y + hgt))
+	var side := color.darkened(0.32)
+	ci.draw_colored_polygon(DrawKit.rounded_rect(body.grow(cell * 0.03), r + 2, 6), OUTLINE)
+	ci.draw_colored_polygon(DrawKit.rounded_rect(body, r, 6), side)
+	# Headlights on the visible face when it drives down; tail-lights up.
+	var band_y := body.end.y - hgt * 0.55
+	if dir == 2 or dir == 0:
+		for sx in [-1.0, 1.0]:
+			ci.draw_circle(Vector2(body.get_center().x + sx * fp.size.x * 0.3, band_y), cell * 0.045, LIGHT if dir == 2 else Color("e63946"), true, -1.0, true)
+	var roof := Rect2(fp.position + up, fp.size)
+	var roof_pts := DrawKit.rounded_rect(roof, r, 6)
+	DrawKit.gradient_fill(ci, roof_pts, color.lightened(0.22), color.lerp(side, 0.15))
+	var c := roof.get_center()
+	var pt := func(u: float, v: float) -> Vector2: return c + a * u * half_len + across * v * half_w
+	# Windscreen near the front, rear window at the back.
+	ci.draw_colored_polygon(PackedVector2Array([pt.call(0.66, 0.74), pt.call(0.66, -0.74), pt.call(0.4, -0.84), pt.call(0.4, 0.84)]), GLASS)
+	ci.draw_line(pt.call(0.59, 0.48), pt.call(0.59, 0.1), GLASS_HI, maxf(2.0, cell * 0.025), true)
+	ci.draw_colored_polygon(PackedVector2Array([pt.call(-0.68, 0.8), pt.call(-0.68, -0.8), pt.call(-0.88, -0.7), pt.call(-0.88, 0.7)]), GLASS)
+	var seats := int(opts.get("seats", 0))
+	if seats > 0:
+		# Parked in a bay: two seats on the roof.
+		var boarded := int(opts.get("boarded", 0))
+		var col: Color = opts.get("seat_color", Color.WHITE)
+		for i in seats:
+			var sp: Vector2 = pt.call(-0.12, 0.42 if i == 0 else -0.42)
+			ci.draw_circle(sp, cell * 0.12, Color(0, 0, 0, 0.25), true, -1.0, true)
+			if i < boarded:
+				ci.draw_circle(sp + Vector2(0, cell * 0.02), cell * 0.1, col.darkened(0.1), true, -1.0, true)
+				ci.draw_circle(sp - Vector2(0, cell * 0.02), cell * 0.075, SKIN[i % SKIN.size()], true, -1.0, true)
+			else:
+				ci.draw_circle(sp, cell * 0.1, Color(1, 1, 1, 0.35), true, -1.0, true)
+	else:
+		# A big white arrow on the roof shows which way it drives.
+		var marked := opts.has("lock") or bool(opts.get("mystery", false))
+		var u0 := 0.05 if marked else -0.08
+		if bool(opts.get("arrow", true)):
+			var head := PackedVector2Array([pt.call(u0 + 0.3, 0.0), pt.call(u0 - 0.08, 0.58), pt.call(u0 - 0.08, -0.58)])
+			ci.draw_colored_polygon(head, Color(1, 1, 1, 0.94))
+			ci.draw_line(pt.call(u0 - 0.06, 0.0), pt.call(u0 - (0.26 if marked else 0.52), 0.0), Color(1, 1, 1, 0.94), cell * 0.11, true)
+			DrawKit.outline(ci, head, Color(0, 0, 0, 0.18), 2.0)
+		if opts.has("lock"):
+			_padlock(ci, pt.call(-0.5, 0.0), cell * 0.7, opts["lock"])
+		elif bool(opts.get("mystery", false)):
+			_mystery_badge(ci, pt.call(-0.5, 0.0), cell * 0.7)
+	ci.draw_line(roof.position + Vector2(cell * 0.1, cell * 0.06), roof.position + Vector2(roof.size.x - cell * 0.1, cell * 0.06), Color(1, 1, 1, 0.28), maxf(2.0, cell * 0.05), true)
+	DrawKit.outline(ci, roof_pts, Color(1, 1, 1, 0.35), 2.0)
+	var flash := float(opts.get("flash", 0.0))
+	if flash > 0.0:
+		ci.draw_colored_polygon(DrawKit.rounded_rect(body, r, 6), Color(1, 1, 1, 0.55 * flash))
+	if bool(opts.get("sleep", false)):
+		_zzz(ci, roof, cell, float(opts.get("time", 0.0)))

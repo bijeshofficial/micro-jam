@@ -85,6 +85,8 @@ func _main() -> void:
 	await _test_leave_costs_life()
 	await _test_hub_and_back()
 	await _test_ads()
+	await _test_double_gift()
+	await _test_free_daily_boosters()
 	await _test_shop_iap_achievements()
 	await _test_modal_stack()
 	_test_daily_tasks()
@@ -93,6 +95,7 @@ func _main() -> void:
 	_test_corrupt_and_migration()
 	_test_layout_aspects()
 	_test_hooks()
+	_test_audio_loop_padding()
 	_finish()
 
 
@@ -202,6 +205,24 @@ func _test_fail_and_warning() -> void:
 
 
 func _test_twists() -> void:
+	# Padlock: a red padlock opens when a full red bus leaves.
+	var pl := _park(4, 3, [
+		{"x": 0, "y": 0, "len": 2, "dir": Park.RIGHT, "color": 0},
+		{"x": 0, "y": 2, "len": 2, "dir": Park.RIGHT, "color": 1, "lock": 0}], [0, 0, 0, 0, 1, 1, 1, 1])
+	var lk := pl.tap(1)
+	_check(lk.size() == 1 and lk[0]["type"] == "locked" and pl.bus(1)["state"] == "lot" and not pl.exitable().has(1), "padlock: a locked bus doesn't move")
+	_check(not bool(ParkSolver.solve(pl.to_dict())["path"].is_empty()) and int(ParkSolver.solve(pl.to_dict())["path"][0]) == 0, "padlock: the solver opens the lock first")
+	var ev := pl.tap(0)
+	_check(ev.any(func(e: Dictionary) -> bool: return e["type"] == "unlock" and int(e["bus"]) == 1) and not pl.is_locked(1), "padlock: opens when a full bus of its colour departs")
+	pl.tap(1)
+	_check(pl.is_won(), "padlock: level finishes after the lock opens")
+	# Mystery bus: colour hidden until the way in front is clear.
+	var my := _park(3, 4, [
+		{"x": 0, "y": 0, "len": 2, "dir": Park.UP, "color": 0},
+		{"x": 0, "y": 2, "len": 2, "dir": Park.UP, "color": 1, "mystery": true}], [0, 0, 0, 0, 1, 1, 1, 1])
+	_check(bool(my.bus(1)["mystery"]), "mystery: starts hidden")
+	var mv := my.tap(0)
+	_check(mv.any(func(e: Dictionary) -> bool: return e["type"] == "reveal" and int(e["bus"]) == 1) and not bool(my.bus(1)["mystery"]), "mystery: revealed once its path is clear")
 	# Sleeping driver: first tap wakes, second drives.
 	var s := _park(3, 3, [{"x": 0, "y": 0, "len": 2, "dir": Park.UP, "color": 0, "sleep": true}], [0, 0, 0, 0])
 	var e1 := s.tap(0)
@@ -276,9 +297,67 @@ func _counts(q: PackedInt32Array, from: int) -> Dictionary:
 
 # --- Solver, levels ----------------------------------------------------------
 
+## The Crane tutorial (L6): no way to win by tapping alone, and with one
+## Crane lift on a pinwheel bus once nothing else can move (the tutorial
+## only allows that) every possible way of playing it wins (it can't be lost).
+func _check_crane_level(l: Dictionary) -> void:
+	var n := int(l["level"])
+	_check(not bool(ParkSolver.solve(l, 20000)["solvable"]), "L%d can't be won without the Crane" % n)
+	var park_script: GDScript = load("res://scripts/systems/park.gd")
+	var p: RefCounted = park_script.new()
+	p.load_dict(l)
+	for id in l["solution"]:
+		if int(id) == int(l["crane_lift"]):
+			p.crane(int(id))
+		else:
+			p.tap(int(id))
+	_check(p.is_won(), "L%d: stored solution (with the Crane) wins" % n)
+	var stats := {"won": 0, "lost": 0}
+	var start: RefCounted = park_script.new()
+	start.load_dict(l)
+	var targets: Array = []
+	for t in l["crane_targets"]:
+		targets.append(int(t))
+	_explore_crane(start, true, stats, park_script, targets)
+	_check(int(stats["won"]) > 0 and int(stats["lost"]) == 0, "L%d: every way of playing with one Crane wins (%d endings, %d lost)" % [n, int(stats["won"]), int(stats["lost"])])
+
+
+func _explore_crane(p: RefCounted, crane_left: bool, stats: Dictionary, park_script: GDScript, targets: Array) -> void:
+	if p.is_won():
+		stats["won"] = int(stats["won"]) + 1
+		return
+	if p.is_failed():
+		stats["lost"] = int(stats["lost"]) + 1
+		return
+	var moved := false
+	for id in p.exitable():
+		var q: RefCounted = park_script.new()
+		q.load_dict(p.to_dict())
+		var ev: Array = q.tap(int(id))
+		if ev.is_empty() or String(ev[0]["type"]) == "bays_full":
+			continue
+		moved = true
+		_explore_crane(q, crane_left, stats, park_script, targets)
+	# The tutorial unlocks the Crane once no bus can drive out.
+	if crane_left and p.free_bay() >= 0 and p.exitable().is_empty():
+		for id in p.lot_buses():
+			if not targets.has(int(id)):
+				continue
+			var q: RefCounted = park_script.new()
+			q.load_dict(p.to_dict())
+			q.crane(int(id))
+			moved = true
+			_explore_crane(q, false, stats, park_script, targets)
+	if not moved:
+		stats["lost"] = int(stats["lost"]) + 1
+
+
 func _test_solver_and_levels() -> void:
 	for n in range(1, 21):
 		var l := LevelGenerator.generate(n)
+		if l.get("needs_crane", false):
+			_check_crane_level(l)
+			continue
 		var r := ParkSolver.solve(l, 20000)
 		_check(bool(r["solvable"]), "authored level %d solvable" % n)
 		_check(ParkSolver.lazy_ok(l, l["solution"]), "authored level %d: stored solution works" % n)
@@ -653,6 +732,62 @@ func _test_ads() -> void:
 	AD.kind = keep_kind
 
 
+## Depot gift: a rewarded ad doubles it once; a failed ad gives nothing.
+func _test_double_gift() -> void:
+	_fresh(10)
+	var g := await _open_level(10)
+	SM.close_all_modals()
+	var coins0: int = CM.get_coins()
+	var booster: String = ["crane", "shuffle", "extra_bay"][1 % 3]
+	var b0: int = BM.count(booster)
+	AD.mock_fail_rate = 1.0
+	g._open_gift()
+	await _wait(0.2)
+	var pop: Control = SM.find_modal("reward")
+	_check(pop != null and pop.button("double") != null, "depot gift offers x2 with an ad")
+	var gift: int = CM.get_coins() - coins0
+	pop.press("double")
+	await _wait(0.4)
+	_check(SM.find_modal("reward") == pop and not pop.button("double").disabled and CM.get_coins() == coins0 + gift, "failed ad: gift not doubled, x2 can be tried again")
+	AD.mock_fail_rate = 0.0
+	pop.press("double")
+	await _wait(0.4)
+	var top: Control = SM.top_modal()
+	_check(top != null and String((top.get("spec") as Dictionary).get("title", "")) == "Gift doubled!", "ad watched: 'Gift doubled!' shows")
+	_check(CM.get_coins() == coins0 + gift * 2 and BM.count(booster) == b0 + 2, "doubled gift grants the coins and booster again")
+	_check(PM.double_milestone(10).is_empty() and not PM.can_double_milestone(20), "a gift doubles only once, and only after it's opened")
+	SM.close_all_modals()
+	g.state = ST_FAILED
+
+
+## Shop: one free booster of each kind per day for a rewarded ad.
+func _test_free_daily_boosters() -> void:
+	S.data = S.defaults()
+	SM.close_all_modals()
+	var shop: Node = load("res://scripts/ui/shop_page.gd").new()
+	root.add_child(shop)
+	await process_frame
+	var c0: int = BM.count("crane")
+	AD.mock_fail_rate = 1.0
+	shop.claim_free_booster("crane")
+	await _wait(0.4)
+	_check(BM.count("crane") == c0 and BM.free_ad_available("crane"), "free booster: failed ad gives nothing, still available")
+	AD.mock_fail_rate = 0.0
+	shop.claim_free_booster("crane")
+	await _wait(0.4)
+	_check(BM.count("crane") == c0 + 1 and not BM.free_ad_available("crane") and BM.free_ad_available("shuffle"), "free booster: ad gives +1 Crane, once per day, per booster")
+	SM.close_all_modals()
+	shop.claim_free_booster("crane")
+	await _wait(0.4)
+	_check(BM.count("crane") == c0 + 1 and SM.find_modal("reward") == null, "free booster: second claim the same day is refused")
+	var fb = shop.free_buttons["crane"]
+	_check(fb.get_label() == "Tomorrow", "free booster button shows Tomorrow")
+	S.game()["daily_free_boosters"]["crane"] = "2000-01-01"
+	_check(BM.free_ad_available("crane"), "free booster is back the next day")
+	SM.close_all_modals()
+	shop.queue_free()
+
+
 func _test_shop_iap_achievements() -> void:
 	S.data = S.defaults()
 	IAP.auto_confirm = true
@@ -789,7 +924,7 @@ func _test_daily_jam() -> void:
 	DM.date_override = "2026-10-04"
 	DM.refresh()
 	S.game()["lives"] = 0
-	S.game()["tutorial_steps"] = {"twist_sleep": true, "twist_cones": true, "twist_covered": true, "twist_tunnel": true}
+	S.game()["tutorial_steps"] = {"twist_sleep": true, "twist_cones": true, "twist_covered": true, "twist_tunnel": true, "twist_mystery": true, "twist_padlock": true, "twist_taxi": true}
 	var a: Dictionary = DM.challenge_level()
 	_check(JSON.stringify(a) == JSON.stringify(DM.challenge_level()) and (a["buses"] as Array).size() >= 10, "Daily Jam level is fixed for the day")
 	SM.play_mode = "daily"
@@ -859,6 +994,18 @@ func _test_layout_aspects() -> void:
 			var ok: bool = view.cell >= 60.0 and view.ring.position.x >= 0.0 and view.ring.end.x <= 1080.0 and view.ring.end.y <= view.bottom + 4.0 and view.ring.position.y >= view.bays_top + view.bay_h - 1.0
 			_check(ok, "layout fits at 1080x%d for level %d (cell %.0f)" % [int(h), lvl, view.cell])
 			view.free()
+
+
+## Godot 4.7 reads one sample past loop_end when a WAV loop wraps; every
+## generated loop must have data beyond loop_end (it crashed on a tablet).
+func _test_audio_loop_padding() -> void:
+	var synth: GDScript = load("res://scripts/systems/tone_synth.gd")
+	var loops: Array[AudioStreamWAV] = [synth.build_music(), synth.build_ambient("park"), synth.build_ambient("hub")]
+	var ok := true
+	for w in loops:
+		var frames := w.data.size() / 2
+		ok = ok and w.loop_mode == AudioStreamWAV.LOOP_FORWARD and frames > w.loop_end
+	_check(ok, "looping sounds have padding past loop_end (no audio-thread overread)")
 
 
 func _test_hooks() -> void:

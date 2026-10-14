@@ -10,6 +10,7 @@ var list: VBoxContainer
 var scroll: ScrollContainer
 var cosmetic_buttons: Dictionary = {}   # id -> GameButton
 var daily_button: GameButton
+var free_buttons: Dictionary = {}   # booster id -> GameButton
 
 
 func _ready() -> void:
@@ -44,6 +45,13 @@ func build() -> void:
 	cosmetic_buttons.clear()
 	list.add_child(_counter_header())
 	list.add_child(_daily_card())
+	_section("Free every day")
+	var free_row := HBoxContainer.new()
+	free_row.add_theme_constant_override("separation", 16)
+	list.add_child(free_row)
+	free_buttons.clear()
+	for id in BoosterManager.IDS:
+		free_row.add_child(_free_booster_card(id))
 	# Real-money coin packs: App Store only (see IAPManager.store_enabled).
 	if IAPManager.store_enabled():
 		_section("Coins")
@@ -71,6 +79,7 @@ func build() -> void:
 		for item in GameData.cosmetics(cat["id"]):
 			cg.add_child(_cosmetic_card(item))
 	_refresh_buttons()
+	UIKit.pass_touches(list)
 
 
 func _section(title: String) -> void:
@@ -168,6 +177,37 @@ func claim_daily() -> void:
 		SaveManager.game()["daily_free_claimed_date"] = GameManager.today()
 		CurrencyManager.add_coins(int(GameData.economy()["daily_free_coins"]))
 		Popups.reward("Daily gift", "+%d coins" % int(GameData.economy()["daily_free_coins"]))
+		_refresh_buttons()
+		changed.emit())
+
+
+## One free booster per day for a rewarded ad.
+func _free_booster_card(id: String) -> Control:
+	var card := _card("purple")
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 6)
+	card.add_child(v)
+	var art := CenterContainer.new()
+	art.add_child(UIKit.disk(BoosterManager.icon(id), 112, UIKit.GOLD, UIKit.GOLD_EDGE))
+	v.add_child(art)
+	v.add_child(UIKit.text("+1 " + BoosterManager.display_name(id), 32, HORIZONTAL_ALIGNMENT_CENTER))
+	var b := UIKit.button("Watch", "gold", "ad", 32, Vector2(0, 100))
+	b.pressed.connect(claim_free_booster.bind(id))
+	v.add_child(b)
+	free_buttons[id] = b
+	return card
+
+
+func claim_free_booster(id: String) -> void:
+	if not BoosterManager.free_ad_available(id):
+		VFXManager.toast("Come back tomorrow for another")
+		return
+	AdManager.show_rewarded("free_" + id, func(ok: bool) -> void:
+		if not ok:
+			VFXManager.toast("Ad not available right now")
+			return
+		if BoosterManager.claim_free_ad(id):
+			Popups.reward("Free booster", "+1 %s" % BoosterManager.display_name(id), BoosterManager.icon(id))
 		_refresh_buttons()
 		changed.emit())
 
@@ -328,6 +368,11 @@ func _refresh_buttons() -> void:
 		var avail := daily_available()
 		daily_button.set_label("Watch" if avail else "Tomorrow")
 		daily_button.set_kind("gold" if avail else "neutral")
+	for id in free_buttons.keys():
+		var fb: GameButton = free_buttons[id]
+		var free := BoosterManager.free_ad_available(id)
+		fb.set_label("Watch" if free else "Tomorrow")
+		fb.set_kind("gold" if free else "neutral")
 	for id in cosmetic_buttons.keys():
 		var b: GameButton = cosmetic_buttons[id]
 		var item := GameData.cosmetic(id)

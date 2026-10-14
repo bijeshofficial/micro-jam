@@ -3,9 +3,9 @@
 	"milestone_every": 10,
 	"milestone_coins": 100,
 	"daily_free_coins": 50,
-	"lives": {"max": 5, "regen_seconds": 1800, "refill_price": 250, "free_levels": 8},
+	"lives": {"max": 5, "regen_seconds": 1800, "refill_price": 350, "free_levels": 8},
 	"starting_boosters": {"crane": 1, "extra_bay": 1, "shuffle": 1},
-	"booster_prices": {"crane": 90, "extra_bay": 70, "shuffle": 50},
+	"booster_prices": {"crane": 180, "extra_bay": 140, "shuffle": 100},
 	"tutorial_grants": {"crane": 2, "extra_bay": 2, "shuffle": 2},
 	"store_platforms": ["ios"],
 	"coin_packs": [
@@ -14,10 +14,10 @@
 		{"id": "coins_large", "name": "Depot safe", "coins": 3000, "price_label": "$3.99", "ribbon": "Best value"}
 	],
 	"bundles": [
-		{"id": "bundle_crane", "name": "Crane x3", "price": 240, "grant": {"crane": 3}},
-		{"id": "bundle_bay", "name": "Extra Bay x3", "price": 190, "grant": {"extra_bay": 3}},
-		{"id": "bundle_shuffle", "name": "Shuffle x3", "price": 130, "grant": {"shuffle": 3}},
-		{"id": "bundle_mixed", "name": "Rush-hour kit", "price": 320, "grant": {"crane": 2, "extra_bay": 2, "shuffle": 2}}
+		{"id": "bundle_crane", "name": "Crane x3", "price": 460, "grant": {"crane": 3}},
+		{"id": "bundle_bay", "name": "Extra Bay x3", "price": 360, "grant": {"extra_bay": 3}},
+		{"id": "bundle_shuffle", "name": "Shuffle x3", "price": 250, "grant": {"shuffle": 3}},
+		{"id": "bundle_mixed", "name": "Rush-hour kit", "price": 720, "grant": {"crane": 2, "extra_bay": 2, "shuffle": 2}}
 	],
 	"cosmetic_categories": [
 		{"id": "livery", "name": "Bus liveries"},

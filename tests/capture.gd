@@ -26,7 +26,7 @@ func _fresh(level: int, coins: int = 640) -> void:
 	S.data["current_level"] = level
 	S.data["game"]["route_seen_level"] = level
 	var steps := {}
-	for k in ["tap", "blocked", "bays", "crane", "extra_bay", "shuffle", "twist_sleep", "twist_cones", "twist_covered", "twist_tunnel", "grant_crane", "grant_extra_bay", "grant_shuffle"]:
+	for k in ["tap", "blocked", "bays", "crane", "extra_bay", "shuffle", "twist_sleep", "twist_cones", "twist_covered", "twist_tunnel", "twist_mystery", "twist_padlock", "twist_taxi", "grant_crane", "grant_extra_bay", "grant_shuffle"]:
 		steps[k] = true
 	S.data["game"]["tutorial_steps"] = steps
 

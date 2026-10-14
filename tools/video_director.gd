@@ -88,7 +88,7 @@ func _fresh(level: int) -> void:
 	S.data["game"]["boosters"] = {"crane": 3, "extra_bay": 2, "shuffle": 4}
 	S.data["settings"]["hints"] = false
 	var steps := {}
-	for k in ["tap", "blocked", "bays", "crane", "extra_bay", "shuffle", "twist_sleep", "twist_cones", "twist_covered", "twist_tunnel", "grant_crane", "grant_extra_bay", "grant_shuffle"]:
+	for k in ["tap", "blocked", "bays", "crane", "extra_bay", "shuffle", "twist_sleep", "twist_cones", "twist_covered", "twist_tunnel", "twist_mystery", "twist_padlock", "twist_taxi", "grant_crane", "grant_extra_bay", "grant_shuffle"]:
 		steps[k] = true
 	S.data["game"]["tutorial_steps"] = steps
 	# All claimed already, so a win doesn't pop an achievement toast.

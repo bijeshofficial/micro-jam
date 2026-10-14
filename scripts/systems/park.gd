@@ -2,8 +2,8 @@ class_name Park
 extends RefCounted
 ## The bus-park rules, as pure logic (no nodes, no animation).
 ##
-## The lot is a w x h grid. Each bus covers 2 (microbus) or 3 (bus) cells in
-## a line and faces up/right/down/left. Tapping a bus drives it forward: if
+## The lot is a w x h grid. Each vehicle covers 1 (taxi), 2 (microbus) or 3
+## (bus) cells in a line and faces up/right/down/left. Tapping a bus drives it forward: if
 ## every cell from its front to the lot edge is free it leaves the lot and
 ## takes the first free loading bay; otherwise it bumps the first blocker.
 ## Passengers wait in one queue; the front one boards the bay bus of the
@@ -17,8 +17,10 @@ extends RefCounted
 ##
 ## Twists: sleeping drivers (first tap wakes), cone barriers (gone after
 ## `cone_clear` buses have left), covered passengers (colour hidden until they
-## reach the front) and a tunnel that releases buses one by one onto a spot
-## at the lot edge.
+## reach the front), a tunnel that releases buses one by one onto a spot
+## at the lot edge, mystery buses (colour hidden until the way in front of
+## them is clear) and padlocks (a locked bus can't drive until a full bus of
+## the padlock's colour has departed).
 ##
 ## tap()/crane() return a list of events, in order, for the view to animate.
 
@@ -38,7 +40,8 @@ const DEFAULT_BAYS := 5
 
 var w := 4
 var h := 5
-## Bus records: {id, x, y, len, dir, color, sleep, state, boarded}.
+## Bus records: {id, x, y, len, dir, color, sleep, state, boarded,
+## mystery (colour hidden), lock (padlock colour, -1 = none)}.
 ## state: "lot" | "tunnel" (waiting inside) | "bay" | "gone".
 var buses: Array = []
 var grid := PackedInt32Array()
@@ -66,8 +69,9 @@ static func from_level(d: Dictionary) -> Park:
 	return p
 
 
+## Seats: big bus 6, microbus 4, taxi (1 cell) 2.
 static func capacity_for(length: int) -> int:
-	return 6 if length >= 3 else 4
+	return 6 if length >= 3 else (4 if length == 2 else 2)
 
 
 func load_dict(d: Dictionary) -> void:
@@ -86,6 +90,8 @@ func load_dict(d: Dictionary) -> void:
 		bus["state"] = String(bus.get("state", "lot"))
 		bus["boarded"] = int(bus.get("boarded", 0))
 		bus["arrival"] = int(bus.get("arrival", 0))
+		bus["mystery"] = bool(bus.get("mystery", false))
+		bus["lock"] = int(bus.get("lock", -1))
 		buses.append(bus)
 	cones = (d.get("cones", []) as Array).duplicate(true)
 	cone_clear = int(d.get("cone_clear", 3))
@@ -322,7 +328,11 @@ func blocker(id: int) -> Dictionary:
 
 func can_exit(id: int) -> bool:
 	var b: Dictionary = buses[id]
-	return b["state"] == "lot" and not bool(b["sleep"]) and not bool(blocker(id)["blocked"])
+	return b["state"] == "lot" and not bool(b["sleep"]) and not is_locked(id) and not bool(blocker(id)["blocked"])
+
+
+func is_locked(id: int) -> bool:
+	return int(buses[id].get("lock", -1)) >= 0
 
 
 ## Buses that would drive out right now if tapped (and a bay is free).
@@ -331,7 +341,7 @@ func exitable() -> Array:
 	if free_bay() < 0:
 		return out
 	for id in lot_buses():
-		if not bool(buses[id]["sleep"]) and not bool(blocker(id)["blocked"]):
+		if not bool(buses[id]["sleep"]) and not is_locked(id) and not bool(blocker(id)["blocked"]):
 			out.append(id)
 	return out
 
@@ -374,6 +384,8 @@ func tap(id: int) -> Array:
 	if bool(b["sleep"]):
 		b["sleep"] = false
 		return [{"type": "wake", "bus": id}]
+	if is_locked(id):
+		return [{"type": "locked", "bus": id, "lock": int(b["lock"])}]
 	var blk := blocker(id)
 	if bool(blk["blocked"]):
 		return [{"type": "blocked", "bus": id, "cell": blk["cell"], "blocker": int(blk["blocker"])}]
@@ -401,6 +413,9 @@ func _leave_lot(id: int, via: String) -> Array:
 	var events: Array = []
 	var bay := free_bay()
 	var path_cells := path(id)
+	if bool(buses[id]["mystery"]):
+		buses[id]["mystery"] = false
+		events.append({"type": "reveal", "bus": id})
 	buses[id]["state"] = "bay"
 	ticks += 1
 	buses[id]["arrival"] = ticks
@@ -420,7 +435,18 @@ func _leave_lot(id: int, via: String) -> Array:
 		if ti >= 0:
 			tunnel["next"] = ti + 1
 			events.append_array(_spawn_tunnel_bus())
+	events.append_array(_reveal_free())
 	events.append_array(resolve())
+	return events
+
+
+## Mystery buses show their colour once nothing stands in front of them.
+func _reveal_free() -> Array:
+	var events: Array = []
+	for id in lot_buses():
+		if bool(buses[id]["mystery"]) and not bool(blocker(id)["blocked"]):
+			buses[id]["mystery"] = false
+			events.append({"type": "reveal", "bus": id})
 	return events
 
 
@@ -462,6 +488,12 @@ func resolve() -> Array:
 			ticks += 1
 			bay_stamps[k] = ticks
 			events.append({"type": "depart", "bus": id, "bay": k})
+			# A full bus leaving opens the padlocks of its colour.
+			var col := int(buses[id]["color"])
+			for lb in buses:
+				if int(lb["lock"]) == col and lb["state"] != "gone":
+					lb["lock"] = -1
+					events.append({"type": "unlock", "bus": int(lb["id"])})
 	if is_won():
 		events.append({"type": "won"})
 	elif is_failed():
@@ -553,6 +585,11 @@ func feasible_exit_order() -> Array:
 		guard += 1
 		var moved := false
 		for id in sim.lot_buses():
+			# A padlocked bus goes after a bus of the padlock's colour (that
+			# bus fills and leaves first when the queue follows this order).
+			var lock := int(sim.buses[id]["lock"])
+			if lock >= 0 and not order.any(func(o: int) -> bool: return int(sim.buses[o]["color"]) == lock):
+				continue
 			if not bool(sim.blocker(id)["blocked"]):
 				order.append(id)
 				sim.buses[id]["state"] = "gone"

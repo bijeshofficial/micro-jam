@@ -9,6 +9,8 @@ enum State { INTRO, PLAYING, FAILING, WON, FAILED }
 const ParkViewScript := preload("res://scripts/gameplay/park_view.gd")
 const WinPanelScript := preload("res://scripts/ui/win_panel.gd")
 const SAVE_DELAY := 0.4
+## Height of the booster row at the bottom (the lot gets everything above).
+const BOOSTER_BAR_H := 186.0
 
 var level := 1
 ## Today's Daily Jam instead of the next level (never costs lives).
@@ -80,7 +82,7 @@ func _ready() -> void:
 		park = Park.from_level(level_data)
 	view = ParkViewScript.new()
 	add_child(view)
-	view.build(park, {"width": vp.x, "top": top, "bottom": vp.y - insets.y - 300.0}, level)
+	view.build(park, {"width": vp.x, "top": top, "bottom": vp.y - insets.y - BOOSTER_BAR_H}, level)
 	view.timeline_done.connect(_on_timeline_done)
 
 	# Rain or snow over the park, below the HUD.
@@ -172,21 +174,12 @@ func _build_top_bar(insets: Vector2) -> void:
 
 
 func _build_booster_bar(vp: Vector2, insets: Vector2) -> void:
-	var strip := Control.new()
-	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	strip.position = Vector2(0, vp.y - insets.y - 300)
-	strip.size = Vector2(vp.x, 300 + insets.y)
-	strip.draw.connect(func() -> void:
-		var tray := Rect2(30, 34, strip.size.x - 60, 256)
-		strip.draw_colored_polygon(DrawKit.rounded_rect(tray.grow(6), 76, 8), Color(0.08, 0.1, 0.24, 0.35))
-		DrawKit.gradient_fill(strip, DrawKit.rounded_rect(tray, 70, 8), Color("2d4f9e"), Color("1c2f66"))
-		DrawKit.outline(strip, DrawKit.rounded_rect(tray.grow(-6), 64, 8), Color(1, 1, 1, 0.2), 3.0))
-	hud.add_child(strip)
+	# No tray: three compact round buttons on the asphalt below the lot.
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 56)
-	row.position = Vector2(0, vp.y - insets.y - 284)
-	row.size = Vector2(vp.x, 260)
+	row.add_theme_constant_override("separation", 70)
+	row.position = Vector2(0, vp.y - insets.y - BOOSTER_BAR_H + 8.0)
+	row.size = Vector2(vp.x, BOOSTER_BAR_H - 8.0)
 	hud.add_child(row)
 	for id in BoosterManager.IDS:
 		var b := BoosterButton.new()
@@ -210,12 +203,12 @@ func _build_crane_banner(vp: Vector2) -> void:
 	row.add_child(UIKit.label("Tap any bus to lift it out", 42, UIKit.INK))
 	crane_banner.visible = false
 	hud.add_child(crane_banner)
-	crane_banner.position = Vector2(80, vp.y - GameManager.get_safe_insets().y - 420)
+	crane_banner.position = Vector2(80, vp.y - GameManager.get_safe_insets().y - BOOSTER_BAR_H - 130.0)
 
 
 ## Tutorial text sits just above the booster bar.
 func hint_text_y() -> float:
-	return get_viewport_rect().size.y - GameManager.get_safe_insets().y - 430.0
+	return get_viewport_rect().size.y - GameManager.get_safe_insets().y - BOOSTER_BAR_H - 140.0
 
 
 func is_playing() -> bool:
@@ -301,7 +294,7 @@ func use_booster(id: String, free: bool = false) -> bool:
 	if AdManager.is_showing() or ScreenManager.is_busy():
 		return false
 	if tutorial.blocks_boosters():
-		VFXManager.toast("Follow the hand first!")
+		VFXManager.toast(tutorial.blocked_booster_text())
 		return false
 	match id:
 		"crane":
@@ -391,6 +384,7 @@ func _set_crane_mode(on: bool, free: bool = false) -> void:
 	else:
 		booster_buttons["crane"].stop_pulse()
 		view.clear_highlights()
+	tutorial.on_crane_mode(on)
 
 
 func _crane_lift(id: int) -> void:
@@ -655,8 +649,45 @@ func _milestone_gift() -> void:
 
 func _open_gift() -> void:
 	var g := ProgressionManager.claim_milestone(level)
-	if not g.is_empty():
-		Popups.reward("Depot gift", "+%d coins\n+1 %s" % [int(g["coins"]), BoosterManager.display_name(g["booster"])], "gift")
+	if g.is_empty():
+		return
+	AudioManager.play("reward")
+	HapticsManager.medium()
+	Popups.show({
+		"id": "reward",
+		"title": "Depot gift",
+		"art": "gift",
+		"art_color": UIKit.PINK,
+		"body": _gift_text(g),
+		"body_size": 54,
+		"body_heavy": true,
+		"vertical": true,
+		"buttons": [
+			{"id": "double", "text": "x2 GIFT", "kind": "purple", "icon": "ad", "close": false, "cb": _double_gift},
+			{"id": "ok", "text": "Nice!", "kind": "primary", "icon": "check"},
+		],
+	})
+
+
+func _gift_text(g: Dictionary) -> String:
+	return "+%d coins\n+1 %s" % [int(g["coins"]), BoosterManager.display_name(g["booster"])]
+
+
+## Rewarded ad on the depot gift: the same coins and booster again, once.
+func _double_gift() -> void:
+	var pop := ScreenManager.find_modal("reward") as GamePopup
+	if pop:
+		pop.button("double").disabled = true
+	AdManager.show_rewarded("double_gift", func(ok: bool) -> void:
+		var g := ProgressionManager.double_milestone(level) if ok else {}
+		if g.is_empty():
+			if is_instance_valid(pop):
+				pop.button("double").disabled = false
+			VFXManager.toast("Ad not available right now")
+			return
+		if is_instance_valid(pop):
+			ScreenManager.close_modal(pop)
+		Popups.reward("Gift doubled!", _gift_text(g), "gift"))
 
 
 func continue_next() -> void:

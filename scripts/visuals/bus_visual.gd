@@ -49,6 +49,16 @@ var highlight := 0.0:
 	set(v):
 		highlight = v
 		queue_redraw()
+## Mystery bus: grey with a "?" until revealed.
+var mystery := false:
+	set(v):
+		mystery = v
+		queue_redraw()
+## Padlock colour, or a transparent colour for none.
+var lock_color := Color(0, 0, 0, 0):
+	set(v):
+		lock_color = v
+		queue_redraw()
 
 var _t := 0.0
 var _move_tween: Tween
@@ -81,11 +91,14 @@ func _draw() -> void:
 		var fp := BusArt.footprint(Vector2.ZERO, cell, length, dir).grow(cell * 0.12)
 		var pulse := 0.5 + 0.5 * sin(_t * 7.0)
 		DrawKit.outline(self, DrawKit.rounded_rect(Rect2(fp.position - Vector2(0, BusArt.body_height(cell)), fp.size + Vector2(0, BusArt.body_height(cell))), cell * 0.28, 6), Color(1, 1, 1, highlight * (0.5 + 0.5 * pulse)), cell * 0.07)
-	BusArt.draw_bus(self, Vector2.ZERO, cell, length, dir, color, {
+	var opts := {
 		"livery": livery, "name": bus_name, "sleep": sleep, "time": _t,
 		"seats": capacity() if show_seats else 0, "boarded": boarded, "seat_color": color,
-		"lift": lift, "flash": flash, "door": door, "arrow": not show_seats,
-	})
+		"lift": lift, "flash": flash, "door": door, "arrow": not show_seats, "mystery": mystery,
+	}
+	if lock_color.a > 0.0:
+		opts["lock"] = lock_color
+	BusArt.draw_bus(self, Vector2.ZERO, cell, length, dir, color, opts)
 
 
 ## Screen-space rect of the bus (taps).
@@ -192,6 +205,20 @@ func flash_once(strength: float = 1.0) -> void:
 	var tw := create_tween()
 	tw.tween_property(self, "flash", strength, 0.05)
 	tw.tween_property(self, "flash", 0.0, 0.25)
+
+
+## Mystery bus: the colour pops in with a flash and a little hop.
+func reveal() -> void:
+	mystery = false
+	flash_once(1.0)
+	squash(Vector2(1.15, 0.85), 0.25)
+
+
+## Padlock pops off.
+func unlock() -> void:
+	lock_color = Color(0, 0, 0, 0)
+	flash_once(0.7)
+	squash(Vector2(1.1, 0.9), 0.2)
 
 
 func wake() -> void:

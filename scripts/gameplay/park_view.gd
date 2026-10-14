@@ -17,9 +17,11 @@ const ROAD_H := 100.0
 const DRIVE_SPEED := 2100.0
 const HOP_TIME := 0.3
 const HOP_GAP := 0.11
-const QUEUE_X0 := 196.0
-const QUEUE_DX := 74.0
-const VISIBLE := 11
+const QUEUE_X0 := 182.0
+const QUEUE_DX := 50.0
+const VISIBLE := 16
+## Passenger size in the queue (they stand shoulder to shoulder).
+const QUEUE_PERSON := 84.0
 
 signal timeline_done
 
@@ -64,6 +66,7 @@ var _more_label: Label
 var _warn_tween: Tween
 var _t := 0.0
 var _hop_streak := 0
+var _last_depart_at := 0.0
 
 
 func build(p: Park, area: Dictionary, level_value: int) -> void:
@@ -232,6 +235,9 @@ func _spawn_bus(id: int, pos: Vector2, c: float, dir: int) -> BusVisual:
 	var bv: BusVisual = BUS_SCENE.instantiate()
 	bv.setup(id, int(b["len"]), dir, GameData.bus_color(int(b["color"])), c, livery, GameData.bus_name(id * 7 + level))
 	bv.sleep = bool(b.get("sleep", false)) and b["state"] == "lot"
+	bv.mystery = bool(b.get("mystery", false))
+	if int(b.get("lock", -1)) >= 0:
+		bv.lock_color = GameData.bus_color(int(b["lock"]))
 	bv.position = pos
 	_bus_layer.add_child(bv)
 	buses[id] = bv
@@ -246,7 +252,7 @@ func _fill_queue(walk_in: bool = false) -> void:
 	var qi := start
 	while queue_nodes.size() < VISIBLE and qi < park.queue.size():
 		var pv: PassengerVisual = PoolManager.acquire(PASSENGER_SCENE, _people_layer)
-		pv.setup(qi, GameData.bus_color(park.queue[qi]), outfit, qi != front_qi and park.covered.has(qi), 100.0)
+		pv.setup(qi, GameData.bus_color(park.queue[qi]), outfit, qi != front_qi and park.covered.has(qi), QUEUE_PERSON)
 		var slot := queue_slot(queue_nodes.size())
 		if walk_in:
 			pv.position = Vector2(width + 60.0, walk_y)
@@ -278,6 +284,12 @@ func play(events: Array) -> float:
 				_on_wake(int(e["bus"]))
 			"blocked":
 				_on_blocked(e)
+			"locked":
+				_on_locked(int(e["bus"]))
+			"reveal":
+				_on_reveal(int(e["bus"]))
+			"unlock":
+				_on_unlock(int(e["bus"]))
 			"bays_full":
 				_on_bays_full(int(e["bus"]))
 			"exit":
@@ -326,6 +338,42 @@ func _on_blocked(e: Dictionary) -> void:
 		elif blocker == Park.CONE:
 			_bounce_cone(hit)
 		VFXManager.sparkle(_fx_layer, bv.position + Vector2(Park.DIRS[int(b["dir"])]) * cell * (float(b["len"]) * 0.5 + gap), Color.WHITE, 0.6))
+
+
+func _on_locked(id: int) -> void:
+	var bv: BusVisual = buses[id]
+	bv.wobble()
+	AudioManager.play("nope")
+	HapticsManager.light()
+	VFXManager.popup_text(_fx_layer, "LOCKED", bv.position + Vector2(0, -cell * 0.6), bv.lock_color.lightened(0.3), 44, 70, 0.7)
+	bus_busy[id] = clock + 0.3
+
+
+## A mystery bus shows its colour once the bus in front has started moving.
+func _on_reveal(id: int) -> void:
+	if not buses.has(id):
+		return
+	_at(clock + 0.25, func() -> void:
+		if not buses.has(id):
+			return
+		var bv: BusVisual = buses[id]
+		bv.reveal()
+		AudioManager.play("pop", 1.1)
+		VFXManager.sparkle(_fx_layer, bv.position, bv.color.lightened(0.4), 0.8))
+
+
+## Padlocks open when a full bus of their colour leaves (timed with it).
+func _on_unlock(id: int) -> void:
+	_at(maxf(clock, _last_depart_at) + 0.15, func() -> void:
+		if not buses.has(id):
+			return
+		var bv: BusVisual = buses[id]
+		var col := bv.lock_color
+		bv.unlock()
+		AudioManager.play("unlock")
+		HapticsManager.light()
+		VFXManager.sparkle(_fx_layer, bv.position, col.lightened(0.4), 1.0)
+		VFXManager.popup_text(_fx_layer, "OPEN!", bv.position + Vector2(0, -cell * 0.6), col.lightened(0.3), 44, 70, 0.7))
 
 
 func _on_bays_full(id: int) -> void:
@@ -516,6 +564,7 @@ func _on_depart(e: Dictionary) -> void:
 	var bay := int(e["bay"])
 	var start := maxf(queue_t + HOP_TIME, float(arrive_at.get(id, clock)))
 	var leave := start + 0.22
+	_last_depart_at = start
 	bay_free_at[bay] = leave + 0.2
 	busy_until = maxf(busy_until, leave + 0.6)
 	_at(start, func() -> void:

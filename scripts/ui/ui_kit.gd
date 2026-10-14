@@ -146,6 +146,18 @@ static func box(fill: Color, radius: float = 40.0, edge: Color = Color.TRANSPARE
 
 ## A glossy coloured game card (shop items, stats, achievements, tasks):
 ## dark frame, 3D bottom lip, gradient body and a soft top shine.
+## Lets a drag that starts on a card or button reach the ScrollContainer
+## above it, so lists scroll from anywhere, not just the gaps. Buttons still
+## work: ScrollContainer cancels a button's press once the drag passes its
+## deadzone (NOTIFICATION_SCROLL_BEGIN). Text fields keep their touches.
+static func pass_touches(root: Node) -> void:
+	if root is Control and not (root is LineEdit or root is TextEdit or root is ScrollContainer or root is ScrollBar):
+		if (root as Control).mouse_filter == Control.MOUSE_FILTER_STOP:
+			(root as Control).mouse_filter = Control.MOUSE_FILTER_PASS
+	for ch in root.get_children():
+		pass_touches(ch)
+
+
 static func card(kind: String = "blue", margin: float = 26.0, radius: float = 34.0) -> PanelContainer:
 	var p := PanelContainer.new()
 	var sb := StyleBoxEmpty.new()

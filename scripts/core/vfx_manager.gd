@@ -4,7 +4,6 @@ extends Node
 
 const TEXT_POPUP := preload("res://scenes/components/text_popup.tscn")
 const SPARKLE := preload("res://scenes/components/sparkle_burst.tscn")
-const CONFETTI := preload("res://scenes/components/confetti_burst.tscn")
 const COIN := preload("res://scenes/components/coin_visual.tscn")
 
 var shake_count := 0
@@ -107,10 +106,11 @@ func sparkle(parent: Node, pos: Vector2, color: Color, amount_scale: float = 1.0
 
 
 ## Paper confetti falling from the top of `parent`'s visible area.
-func confetti(parent: Node, width: float, top: float = -40.0) -> void:
-	for i in 3:
-		var c: ConfettiBurst = PoolManager.acquire(CONFETTI, parent)
-		c.burst(Vector2(width * (0.2 + 0.3 * i), top), width)
+## A short confetti pop on `parent` (the level HUD), behind any popup.
+func confetti(parent: Node, width: float, _top: float = -40.0) -> void:
+	var c := ConfettiShower.new()
+	parent.add_child(c)
+	c.burst(width, get_viewport().get_visible_rect().size.y)
 
 
 ## Coins fly from `from` to `to` (global canvas positions on the FX layer).

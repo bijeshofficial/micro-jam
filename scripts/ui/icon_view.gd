@@ -25,7 +25,8 @@ extends Control
 		shadow_color = v
 		queue_redraw()
 
-const NO_SHADOW := ["coin", "coin_pile", "bus", "ticket", "chest", "flame"]
+const NO_SHADOW := ["coin", "coin_pile", "bus", "ticket", "chest", "flame", "nav_shop", "nav_home", "nav_profile"]
+const INK := Color("17213f")
 
 
 func _draw() -> void:
@@ -83,6 +84,8 @@ func _shape(_c: Color, _a: Color) -> void:
 				draw_colored_polygon(PackedVector2Array([p.call(x0 + 4, 12), p.call(x0 + 25, 12), p.call(x0 + 21, 40), p.call(x0, 40)]), _c if k % 2 == 0 else _c.lightened(0.35))
 				draw_circle(p.call(x0 + 10.5, 40), 10.5 * u, _c if k % 2 == 0 else _c.lightened(0.35), true, -1.0, true)
 			DrawKit.rrect(self, Rect2(p.call(40, 60), Vector2(20, 30) * u), 4 * u, _a)
+		"nav_shop", "nav_home", "nav_profile":
+			_nav_icon(icon, p, u)
 		"home":
 			draw_colored_polygon(PackedVector2Array([p.call(50, 10), p.call(94, 48), p.call(6, 48)]), _c)
 			draw_rect(Rect2(p.call(18, 44), Vector2(64, 46) * u), _c)
@@ -248,3 +251,91 @@ func _shape(_c: Color, _a: Color) -> void:
 			draw_colored_polygon(PackedVector2Array([p.call(20, 70), p.call(34, 84), p.call(12, 92)]), _c.darkened(0.3))
 		_:
 			draw_circle(c, 30 * u, _c, true, -1.0, true)
+
+
+## Full-colour dock icons (Shop / Home / Profile): navy outlines, glossy
+## highlights and a soft drop shadow, so they read as game art, not glyphs.
+func _nav_icon(id: String, p: Callable, u: float) -> void:
+	var lw := 5.0 * u
+	var shade := Color(0.03, 0.06, 0.22, 0.4)
+	match id:
+		"nav_shop":
+			# Shadow, then the shopfront body.
+			draw_colored_polygon(DrawKit.rounded_rect(Rect2(p.call(14, 30), Vector2(72, 66) * u), 8 * u, 4), shade)
+			var body := DrawKit.rounded_rect(Rect2(p.call(16, 26), Vector2(68, 64) * u), 7 * u, 4)
+			DrawKit.fill_outlined(self, body, Color("fff1d6"), INK, lw)
+			# Shop window with a glint, and a door.
+			var win := DrawKit.rounded_rect(Rect2(p.call(23, 52), Vector2(27, 22) * u), 4 * u, 3)
+			DrawKit.gradient_fill(self, win, Color("bfe6ff"), Color("5fb0f0"))
+			DrawKit.outline(self, win, INK, lw * 0.8)
+			draw_line(p.call(28, 57), p.call(35, 57), Color(1, 1, 1, 0.9), 3.5 * u, true)
+			var door := DrawKit.rounded_rect(Rect2(p.call(56, 52), Vector2(21, 38) * u), 4 * u, 3)
+			DrawKit.fill_outlined(self, door, Color("2f8fe8"), INK, lw * 0.8)
+			draw_circle(p.call(72, 72), 2.4 * u, Color("ffd84a"), true, -1.0, true)
+			# Striped awning with scalloped edge: navy under-shape first.
+			var top := 14.0
+			var bot := 40.0
+			DrawKit.fill_outlined(self, DrawKit.rounded_rect(Rect2(p.call(8, top), Vector2(84, bot - top) * u), 5 * u, 3), INK, INK, lw)
+			for k in 5:
+				var x0 := 8.0 + k * 16.8
+				draw_circle(p.call(x0 + 8.4, bot), 8.4 * u + lw * 0.5, INK, true, -1.0, true)
+			for k in 5:
+				var x0 := 8.0 + k * 16.8
+				var col := Color("e63946") if k % 2 == 0 else Color("ffffff")
+				draw_rect(Rect2(p.call(x0 + 0.6, top + 2), Vector2(15.6, bot - top - 2) * u), col)
+				draw_circle(p.call(x0 + 8.4, bot), 7.8 * u, col, true, -1.0, true)
+			draw_line(p.call(13, top + 5), p.call(40, top + 5), Color(1, 1, 1, 0.55), 3.5 * u, true)
+		"nav_home":
+			var roof := PackedVector2Array([p.call(50, 8), p.call(94, 46), p.call(6, 46)])
+			var walls := DrawKit.rounded_rect(Rect2(p.call(16, 40), Vector2(68, 52) * u), 6 * u, 3)
+			# Shadow.
+			draw_set_transform(Vector2(0, 5 * u))
+			draw_colored_polygon(walls, shade)
+			draw_colored_polygon(roof, shade)
+			draw_set_transform(Vector2.ZERO)
+			# Chimney behind the roof.
+			DrawKit.fill_outlined(self, DrawKit.rounded_rect(Rect2(p.call(66, 14), Vector2(12, 22) * u), 2 * u, 2), Color("b5533c"), INK, lw * 0.8)
+			DrawKit.fill_outlined(self, walls, Color("fff1d6"), INK, lw)
+			# Roof with a darker eave and a highlight.
+			DrawKit.gradient_fill(self, roof, Color("ff6b5e"), Color("d6283a"))
+			DrawKit.outline(self, roof, INK, lw)
+			draw_line(p.call(50, 15), p.call(24, 37), Color(1, 1, 1, 0.5), 4 * u, true)
+			# Door and a lit window.
+			var door := DrawKit.rounded_rect(Rect2(p.call(26, 60), Vector2(20, 32) * u), 4 * u, 3)
+			DrawKit.fill_outlined(self, door, Color("2f8fe8"), INK, lw * 0.8)
+			draw_circle(p.call(41, 77), 2.4 * u, Color("ffd84a"), true, -1.0, true)
+			var win := DrawKit.rounded_rect(Rect2(p.call(54, 58), Vector2(22, 20) * u), 3 * u, 3)
+			DrawKit.gradient_fill(self, win, Color("fff3a8"), Color("ffc93a"))
+			DrawKit.outline(self, win, INK, lw * 0.8)
+			draw_line(p.call(65, 59), p.call(65, 77), INK, 3 * u, true)
+			draw_line(p.call(55, 68), p.call(75, 68), INK, 3 * u, true)
+		"nav_profile":
+			# Shoulders (green shirt) and head, with the conductor's red cap.
+			var shirt := PackedVector2Array()
+			for i in 25:
+				var a := PI + PI * i / 24.0
+				shirt.append(p.call(50, 96) + Vector2(cos(a) * 40, sin(a) * 34) * u)
+			draw_set_transform(Vector2(0, 5 * u))
+			draw_colored_polygon(shirt, shade)
+			draw_circle(p.call(50, 44), 25 * u, shade, true, -1.0, true)
+			draw_set_transform(Vector2.ZERO)
+			DrawKit.gradient_fill(self, shirt, Color("4fd68f"), Color("1f9d5f"))
+			DrawKit.outline(self, shirt, INK, lw)
+			draw_line(p.call(50, 66), p.call(50, 94), Color("17703f"), 3 * u, true)
+			var head := DrawKit.ellipse(p.call(50, 46), 22 * u, 23 * u, 32)
+			DrawKit.fill_outlined(self, head, Color("f2c29b"), INK, lw)
+			# Cap: crown, then the brim.
+			var crown := PackedVector2Array()
+			for i in 17:
+				var a := PI + PI * i / 16.0
+				crown.append(p.call(50, 38) + Vector2(cos(a) * 23, sin(a) * 19) * u)
+			DrawKit.gradient_fill(self, crown, Color("ff6b5e"), Color("d6283a"))
+			DrawKit.outline(self, crown, INK, lw)
+			DrawKit.capsule_outlined(self, p.call(36, 38), p.call(76, 38), 4.5 * u, Color("c4202f"), INK, lw * 0.8)
+			draw_line(p.call(38, 26), p.call(46, 22), Color(1, 1, 1, 0.55), 3.5 * u, true)
+			# Face: eyes, rosy cheeks, smile.
+			draw_circle(p.call(42, 50), 3.2 * u, INK, true, -1.0, true)
+			draw_circle(p.call(58, 50), 3.2 * u, INK, true, -1.0, true)
+			draw_circle(p.call(37, 58), 3.6 * u, Color(1.0, 0.45, 0.45, 0.45), true, -1.0, true)
+			draw_circle(p.call(63, 58), 3.6 * u, Color(1.0, 0.45, 0.45, 0.45), true, -1.0, true)
+			draw_arc(p.call(50, 56), 7 * u, 0.2, PI - 0.2, 12, INK, 3 * u, true)

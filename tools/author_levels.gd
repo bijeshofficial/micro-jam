@@ -32,11 +32,17 @@ const TABLE := [
 
 func _initialize() -> void:
 	GameData.preload_all()
+	# Levels 1-2 and any level marked "handmade" (L6's Crane pinwheel) are
+	# placed by hand: keep them as they are.
 	var keep: Array = []
+	var handmade := {}
 	for l in GameData.authored_levels():
-		if int(l["level"]) <= 2:
+		if int(l["level"]) <= 2 or bool(l.get("handmade", false)):
 			keep.append(_norm(l))
+			handmade[int(l["level"])] = true
 	for row in TABLE:
+		if handmade.has(int(row[0])):
+			continue
 		var p := {
 			"level": row[0], "w": row[1], "h": row[2], "buses": row[3], "colors": row[4],
 			"big": row[5], "window": row[6], "tier": row[7], "twists": row[8], "bays": 5,
@@ -53,6 +59,7 @@ func _initialize() -> void:
 		lvl["fail_rate"] = snappedf(float(lvl["fail_rate"]), 0.01)
 		keep.append(lvl)
 		print("L%d  %dx%d  buses %d  colours %d  fail %.2f  bays %d" % [row[0], row[1], row[2], (lvl["buses"] as Array).size(), row[4], lvl["fail_rate"], lvl["plan_bays"]])
+	keep.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["level"]) < int(b["level"]))
 	var f := FileAccess.open(OUT, FileAccess.WRITE)
 	f.store_string(_pretty(keep))
 	f.close()

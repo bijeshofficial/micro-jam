@@ -181,18 +181,45 @@ func challenge_reward() -> int:
 	return int(c.get("reward_coins", 40)) + int(c.get("streak_bonus", 10)) * (mini(next_streak, int(c.get("streak_cap", 7))) - 1)
 
 
-## The Daily Jam for today: generated from the date, sized to the player's
-## progress, always a normal-tier level (no lives needed).
+func challenge_params(player_level: int, date_key: String) -> Dictionary:
+	var c: Dictionary = config().get("challenge", {})
+	var shapes: Array = c.get("shapes", ["round", "octagon", "diamond", "plus"])
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash("micro-jam/daily-shape/" + date_key)
+	var shape := String(shapes[rng.randi() % shapes.size()])
+	var size_level := maxi(int(c.get("size_level", 220)), player_level)
+	var p := LevelGenerator.params_for(size_level, shape)
+	var veteran := player_level >= int(c.get("veteran_level", 100))
+	p["tier"] = "normal" if veteran else "easy"
+	p["level"] = 0
+	if not veteran:
+		# Still a big lot, but fewer colours, a few fewer buses and a passenger
+		# line that serves one bus at a time (more spare bays) for beginners.
+		p["colors"] = clampi(int(p["colors"]), 3, 4 + player_level / 40)
+		p["buses"] = mini(int(p["buses"]), 23 + player_level / 12)
+		if player_level < 40:
+			p["window"] = 1
+	var known: Array = []
+	var twists: Dictionary = GameData.difficulty()["twists"]
+	for t in p["twists"]:
+		if player_level >= int(twists[t]["from"]):
+			known.append(t)
+	p["twists"] = known
+	return p
+
+
+## The Daily Jam for today: generated from the date, always a big shaped
+## lot (round, octagon, diamond or cross, picked by the date) so it feels
+## like an event even early on. It stays fair for newer players: fewer
+## colours, only twists they've already been introduced to, and the easier
+## difficulty target. No lives needed.
 func challenge_level() -> Dictionary:
 	var key := today()
 	if _level_cache.has(key):
 		return (_level_cache[key] as Dictionary).duplicate(true)
-	var c: Dictionary = config().get("challenge", {})
-	var base := maxi(int(c.get("min_level", 18)), ProgressionManager.current_level())
-	var p := LevelGenerator.params_for(base)
-	p["tier"] = "normal"
-	p["level"] = 0
+	var p := challenge_params(ProgressionManager.current_level(), key)
 	var lvl := LevelGenerator.generate_with(p, hash("micro-jam/daily-jam/" + key))
+	lvl["shape"] = lvl.get("shape", p["shape"])
 	lvl["daily"] = true
 	lvl["tier"] = "daily"
 	_level_cache.clear()

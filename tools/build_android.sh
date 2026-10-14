@@ -48,8 +48,11 @@ case "$MODE" in
     echo "Install it: $ANDROID_HOME/platform-tools/adb install -r build/android/micro-jam-test.apk"
     ;;
   release)
-    # Safety: never ship Google's test IDs or the XXXX placeholders.
-    if grep -q "XXXXXXXX" data/ads.json || grep -q "3940256099942544~" project.godot; then
+    # Safety: never ship Google's test IDs or the XXXX placeholders. The
+    # plugin falls back to Google's test app ID when project.godot has none,
+    # so the real ID must be written there and match data/ads.json.
+    APP_ID="$(sed -n 's|^general/android/app_id="\(.*\)"$|\1|p' project.godot)"
+    if grep -q "XXXXXXXX" data/ads.json || [ -z "$APP_ID" ] || [[ "$APP_ID" == *3940256099942544* ]] || ! grep -q "\"$APP_ID\"" data/ads.json; then
       echo "AdMob IDs are not filled in yet: put your 4 IDs in data/ads.json and project.godot [admob] (docs/LAUNCH_GUIDE.md part 2)." >&2
       exit 1
     fi

@@ -1,7 +1,8 @@
 class_name BoosterButton
 extends Button
-## Big glossy round booster button: coloured disk with a white icon, a label
-## underneath and a count badge (green number, or a gold "+" at 0).
+## Round glossy booster button: coloured disk with a white icon, a label
+## underneath and a count badge (green number, or a gold "+" at 0). Compact,
+## so the parking lot gets the screen.
 
 const COLORS := {
 	"crane": [Color("ffc300"), Color("d98200")],
@@ -22,17 +23,17 @@ func setup(id: String) -> void:
 	booster_id = id
 	flat = true
 	focus_mode = Control.FOCUS_NONE
-	custom_minimum_size = Vector2(230, 250)
+	custom_minimum_size = Vector2(190, 168)
 	for st in ["normal", "hover", "pressed", "focus", "disabled", "hover_pressed"]:
 		add_theme_stylebox_override(st, StyleBoxEmpty.new())
-	_icon = UIKit.icon(BoosterManager.icon(id), 92, Color.WHITE)
+	_icon = UIKit.icon(BoosterManager.icon(id), ICON, Color.WHITE)
 	_icon.accent = COLORS[id][0]
 	_icon.shadow = true
 	_icon.shadow_color = COLORS[id][1].darkened(0.4)
 	add_child(_icon)
-	_label = UIKit.title(BoosterManager.display_name(id), 36)
+	_label = UIKit.title(BoosterManager.display_name(id), 30)
 	add_child(_label)
-	_badge = UIKit.title("0", 36, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, Color("0b5a33"))
+	_badge = UIKit.title("0", 30, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, Color("0b5a33"))
 	add_child(_badge)
 	button_down.connect(func() -> void:
 		_press = 1.0
@@ -56,15 +57,21 @@ func _on_booster_changed(_id: String, _n: int) -> void:
 	refresh()
 
 
+const RADIUS := 60.0
+const CENTER_Y := 66.0
+const ICON := 66.0
+const BADGE_R := 27.0
+
+
 func _layout() -> void:
 	pivot_offset = size * 0.5
-	var c := Vector2(size.x * 0.5, 98)
-	_icon.position = c - Vector2(46, 50)
-	_icon.size = Vector2(92, 92)
-	_label.position = Vector2(-20, 192)
-	_label.size = Vector2(size.x + 40, 50)
-	_badge.position = c + Vector2(48, -92)
-	_badge.size = Vector2(64, 64)
+	var c := Vector2(size.x * 0.5, CENTER_Y)
+	_icon.position = c - Vector2(ICON * 0.5, ICON * 0.5 + 3)
+	_icon.size = Vector2(ICON, ICON)
+	_label.position = Vector2(-20, CENTER_Y + RADIUS + 4)
+	_label.size = Vector2(size.x + 40, 40)
+	_badge.position = c + Vector2(RADIUS * 0.9, -RADIUS * 0.68) - Vector2(BADGE_R, BADGE_R) * 1.15
+	_badge.size = Vector2(BADGE_R, BADGE_R) * 2.3
 	queue_redraw()
 
 
@@ -76,22 +83,24 @@ func set_free(v: bool) -> void:
 func refresh() -> void:
 	var n := BoosterManager.count(booster_id)
 	_badge.text = "free" if _free else (str(n) if n > 0 else "+")
-	_badge.add_theme_font_size_override("font_size", 24 if _free else 38)
+	_badge.add_theme_font_size_override("font_size", 20 if _free else 30)
 	var ol := Color("0b5a33") if (n > 0 or _free) else Color("8a3000")
-	UIKit.game_text(_badge, ol, 36)
+	UIKit.game_text(_badge, ol, 30)
 	queue_redraw()
 
 
 func _draw() -> void:
-	var c := Vector2(size.x * 0.5, 98)
+	var c := Vector2(size.x * 0.5, CENTER_Y)
 	var cols: Array = COLORS[booster_id]
-	DrawKit.glossy_circle(self, c + Vector2(0, _press * 5.0), 88, cols[0], cols[1], 6.0, 12.0 * (1.0 - _press))
+	# Soft shadow so the disk reads on the asphalt (there's no tray behind it).
+	draw_circle(c + Vector2(0, 12), RADIUS + 2, Color(0.02, 0.04, 0.15, 0.35), true, -1.0, true)
+	DrawKit.glossy_circle(self, c + Vector2(0, _press * 4.0), RADIUS, cols[0], cols[1], 5.0, 9.0 * (1.0 - _press))
 	var n := BoosterManager.count(booster_id)
-	var bc := c + Vector2(80, -60)
+	var bc := c + Vector2(RADIUS * 0.9, -RADIUS * 0.68)
 	if n > 0 or _free:
-		DrawKit.glossy_circle(self, bc, 36, UIKit.PRIMARY, UIKit.PRIMARY_EDGE, 4.0, 5.0)
+		DrawKit.glossy_circle(self, bc, BADGE_R, UIKit.PRIMARY, UIKit.PRIMARY_EDGE, 4.0, 4.0)
 	else:
-		DrawKit.glossy_circle(self, bc, 36, UIKit.GOLD, UIKit.GOLD_EDGE, 4.0, 5.0)
+		DrawKit.glossy_circle(self, bc, BADGE_R, UIKit.GOLD, UIKit.GOLD_EDGE, 4.0, 4.0)
 
 
 func start_pulse() -> void:

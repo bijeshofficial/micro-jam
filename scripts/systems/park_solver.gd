@@ -7,7 +7,9 @@ extends RefCounted
 ## A compact copy of the rules: buses never move except to leave, so the lot
 ## is a bitmask of buses still parked (lot + tunnel), and each bus's exit
 ## path is a precomputed list of cell indices. Sleeping drivers are ignored
-## (waking is free) and covered passengers don't change the rules. Bays
+## (waking is free), covered passengers and mystery buses don't change the
+## rules, and a padlocked bus can leave once a bus of the padlock's colour has
+## departed (left the lot and is no longer in a bay). Bays
 ## are kept as a list in arrival order (which bay a bus uses doesn't matter
 ## to the rules), so equivalent states share one memo key.
 
@@ -18,6 +20,7 @@ class Sim:
 	var h := 0
 	var color := PackedInt32Array()
 	var cap := PackedInt32Array()
+	var lock := PackedInt32Array()          # padlock colour, -1 = none
 	var paths: Array = []                  # bus -> PackedInt32Array of cells
 	var owner := PackedInt32Array()        # cell -> regular lot bus (or -1)
 	var cone := PackedByteArray()          # cell -> 1 while cones stand
@@ -42,6 +45,7 @@ static func build(d: Dictionary) -> Sim:
 	s.n = bl.size()
 	s.color.resize(s.n)
 	s.cap.resize(s.n)
+	s.lock.resize(s.n)
 	s.is_tunnel.resize(s.n)
 	s.is_tunnel.fill(0)
 	s.owner.resize(s.w * s.h)
@@ -57,6 +61,7 @@ static func build(d: Dictionary) -> Sim:
 		var b: Dictionary = bl[i]
 		var length := int(b.get("len", 2))
 		s.color[i] = int(b.get("color", 0))
+		s.lock[i] = int(b.get("lock", -1))
 		s.cap[i] = Park.capacity_for(length)
 		var x := int(b.get("x", 0))
 		var y := int(b.get("y", 0))
@@ -157,6 +162,8 @@ static func can_exit(s: Sim, st: Array, b: int) -> bool:
 		return false
 	if s.is_tunnel[b] == 1 and tunnel_head(s, mask) != b:
 		return false
+	if s.lock[b] >= 0 and not _departed(s, st, s.lock[b]):
+		return false
 	var cones_up: bool = int(st[2]) < s.cone_clear
 	for c in s.paths[b]:
 		var o := s.owner[c]
@@ -165,6 +172,23 @@ static func can_exit(s: Sim, st: Array, b: int) -> bool:
 		if cones_up and s.cone[c] == 1:
 			return false
 	return true
+
+
+## True once a bus of colour `c` has left the lot and its bay (it filled up).
+static func _departed(s: Sim, st: Array, c: int) -> bool:
+	var mask: int = st[0]
+	var bays: PackedInt32Array = st[3]
+	for i in s.n:
+		if s.color[i] != c or (mask & (1 << i)):
+			continue
+		var in_bay := false
+		for k in bays.size() / 2:
+			if bays[k * 2] == i:
+				in_bay = true
+				break
+		if not in_bay:
+			return true
+	return false
 
 
 static func moves(s: Sim, st: Array) -> Array:

@@ -38,7 +38,7 @@ func _write() -> void:
 	S.data["selected_items"] = {"livery": "livery_mountain"}
 	S.game()["lives"] = 3
 	S.game()["boosters"] = {"crane": 4, "extra_bay": 2, "shuffle": 0}
-	for k in ["twist_sleep", "twist_cones", "twist_covered", "twist_tunnel"]:
+	for k in ["twist_sleep", "twist_cones", "twist_covered", "twist_tunnel", "twist_mystery", "twist_padlock", "twist_taxi"]:
 		S.game()["tutorial_steps"][k] = true
 	S.set_setting("haptics", false)
 	S.save_game()

@@ -106,6 +106,27 @@ func claim_milestone(level: int) -> Dictionary:
 	if claimed.has(level):
 		return {}
 	claimed.append(level)
+	return _grant_milestone(level)
+
+
+## A claimed gift can be doubled once by watching a rewarded ad: grants the
+## same coins and booster again. Returns {coins, booster} or {} if not allowed.
+func can_double_milestone(level: int) -> bool:
+	var g := SaveManager.game()
+	return (g["milestones_claimed"] as Array).has(level) and not (g.get("milestones_doubled", []) as Array).has(level)
+
+
+func double_milestone(level: int) -> Dictionary:
+	if not can_double_milestone(level):
+		return {}
+	var g := SaveManager.game()
+	if not g.has("milestones_doubled"):
+		g["milestones_doubled"] = []
+	(g["milestones_doubled"] as Array).append(level)
+	return _grant_milestone(level)
+
+
+func _grant_milestone(level: int) -> Dictionary:
 	var coins := int(GameData.economy().get("milestone_coins", 100))
 	var boosters := ["crane", "shuffle", "extra_bay"]
 	var booster: String = boosters[(level / 10) % boosters.size()]

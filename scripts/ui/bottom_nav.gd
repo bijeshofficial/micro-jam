@@ -6,7 +6,7 @@ extends Control
 
 signal tab_selected(index: int)
 
-const TABS := [["shop", "Shop"], ["home", "Home"], ["profile", "Profile"]]
+const TABS := [["nav_shop", "Shop"], ["nav_home", "Home"], ["nav_profile", "Profile"]]
 ## Dock height without the safe-area inset.
 const HEIGHT := 200.0
 const LIFT := 34.0

@@ -25,6 +25,11 @@ var _swipe_time := 0
 var _swiping := false
 
 
+## The bars draw above page content, which uses small z_index values of its
+## own (ribbons, badges) that would otherwise paint over the bottom nav.
+const BARS_Z := 20
+
+
 func _ready() -> void:
 	VFXManager.toast_anchor = "top"
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -59,8 +64,10 @@ func _ready() -> void:
 		var h := shade.size.y
 		shade.draw_polygon(PackedVector2Array([Vector2(0, 0), Vector2(shade.size.x, 0), Vector2(shade.size.x, h), Vector2(0, h)]),
 			PackedColorArray([Color(0.04, 0.07, 0.25, 0.55), Color(0.04, 0.07, 0.25, 0.55), Color(0.04, 0.07, 0.25, 0.0), Color(0.04, 0.07, 0.25, 0.0)])))
+	shade.z_index = BARS_Z
 	add_child(shade)
 	var top := MarginContainer.new()
+	top.z_index = BARS_Z
 	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	top.add_theme_constant_override("margin_top", int(UIKit.safe_top()) + 22)
 	top.add_theme_constant_override("margin_left", 26)
@@ -83,6 +90,7 @@ func _ready() -> void:
 	nav.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	nav.offset_top = -nav_h
 	nav.tab_selected.connect(select_tab)
+	nav.z_index = BARS_Z
 	add_child(nav)
 
 	shop.changed.connect(_refresh_dots)
@@ -118,7 +126,7 @@ func _rebuild() -> void:
 
 
 func _refresh_dots() -> void:
-	nav.set_dot(0, ShopPage.daily_available())
+	nav.set_dot(0, ShopPage.daily_available() or BoosterManager.any_free_ad_available())
 	nav.set_dot(1, DailyManager.claimable_count() > 0 or not DailyManager.challenge_done_today())
 	nav.set_dot(2, AchievementManager.claimable_count() > 0)
 	if home:
@@ -150,7 +158,7 @@ func select_tab(index: int) -> void:
 		0:
 			shop._refresh_buttons()
 		1:
-			home.refresh()
+			home.refresh(true)
 		2:
 			profile.build()
 	_refresh_dots()

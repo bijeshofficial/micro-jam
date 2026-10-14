@@ -10,5 +10,5 @@
 		{"id": "daily_jam", "text": "Clear the Daily Jam", "stat": "daily_jams", "targets": [1], "reward": {"coins": 20}}
 	],
 	"chest": {"coins": 60, "extra_bay": 1},
-	"challenge": {"reward_coins": 40, "streak_bonus": 10, "streak_cap": 7, "min_level": 18}
+	"challenge": {"reward_coins": 40, "streak_bonus": 10, "streak_cap": 7, "size_level": 220, "veteran_level": 100, "shapes": ["round", "octagon", "diamond", "plus"]}
 }

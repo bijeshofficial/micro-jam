@@ -48,6 +48,31 @@ func buy(id: String) -> bool:
 	return true
 
 
+## Once a day per booster: +1 for watching a rewarded ad (Shop).
+func free_ad_available(id: String) -> bool:
+	var dates: Dictionary = SaveManager.game().get("daily_free_boosters", {})
+	return IDS.has(id) and String(dates.get(id, "")) != GameManager.today()
+
+
+func any_free_ad_available() -> bool:
+	for id in IDS:
+		if free_ad_available(id):
+			return true
+	return false
+
+
+## Call after the ad paid out. Returns false if it was already claimed today.
+func claim_free_ad(id: String) -> bool:
+	if not free_ad_available(id):
+		return false
+	var g := SaveManager.game()
+	if not g.has("daily_free_boosters"):
+		g["daily_free_boosters"] = {}
+	g["daily_free_boosters"][id] = GameManager.today()
+	grant(id, 1)
+	return true
+
+
 ## One-time tutorial grant (L6 Crane, L8 Extra Bay, L12 Shuffle).
 func grant_tutorial(id: String) -> int:
 	var key := "grant_" + id

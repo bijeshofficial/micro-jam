@@ -244,13 +244,19 @@ func _spawn_bus(id: int, pos: Vector2, c: float, dir: int) -> BusVisual:
 	return bv
 
 
-## Tops the visible line up to VISIBLE passengers. With `walk_in`, new ones
+## How many passengers fit on the sidewalk (16 on a phone, more on wide
+## screens like iPads), leaving room for the "+N" label on the right.
+func visible_count() -> int:
+	return clampi(int((width - QUEUE_X0 - 130.0) / QUEUE_DX) + 1, VISIBLE, 32)
+
+
+## Tops the visible line up to visible_count() passengers. With `walk_in`, new ones
 ## walk in from the right edge.
 func _fill_queue(walk_in: bool = false) -> void:
 	var start := park.qpos if queue_nodes.is_empty() else (queue_nodes[queue_nodes.size() - 1] as PassengerVisual).qi + 1
 	var front_qi := park.qpos if queue_nodes.is_empty() else (queue_nodes[0] as PassengerVisual).qi
 	var qi := start
-	while queue_nodes.size() < VISIBLE and qi < park.queue.size():
+	while queue_nodes.size() < visible_count() and qi < park.queue.size():
 		var pv: PassengerVisual = PoolManager.acquire(PASSENGER_SCENE, _people_layer)
 		pv.setup(qi, GameData.bus_color(park.queue[qi]), outfit, qi != front_qi and park.covered.has(qi), QUEUE_PERSON)
 		var slot := queue_slot(queue_nodes.size())

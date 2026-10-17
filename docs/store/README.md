@@ -10,6 +10,8 @@ what players see.
 |---|---|---|
 | `screenshots/android/01..08_*.png` | 1080 x 1920 | Google Play phone screenshots (upload as is) |
 | `screenshots/ios-6.5/01..08_*.png` | 1242 x 2688 | App Store 6.5" iPhone screenshots (upload as is) |
+| `screenshots/ios-6.9/01..08_*.png` | 1320 x 2868 | **App Store 6.9" iPhone screenshots** (uploaded via the API) |
+| `screenshots/ipad-13/01..08_*.png` | 2064 x 2752 | **App Store 13" iPad screenshots** (uploaded via the API) |
 | `art/icon_512.png` | 512 x 512 | **Google Play app icon** (upload as is) |
 | `art/icon_1024.png` | 1024 x 1024, no alpha | **App Store icon** (upload as is) |
 | `art/icon_master.png` | 1536 x 1536 | The designed icon at full size (source for the others) |

@@ -459,58 +459,59 @@ are done.
 
 ---
 
-## 10. App Store (iOS), after Play
+## 10. App Store (iOS)
 
-- [ ] (you) The Apple items from section 1 are done
-- [ ] (you) **Xcode** from the Mac App Store, signed in with your Apple ID
-  (Xcode → Settings → Accounts)
-- [ ] (Claude) iOS export preset:
-  - bundle ID `com.neuronnest.microjam` and your **Team ID** (Apple
-    Developer → Membership);
-  - icons from `docs/store/art/icon_1024.png` (no alpha channel);
-  - AdMob's `GADApplicationIdentifier`, written by the plugin from
-    `project.godot [admob]`;
-  - Google's `SKAdNetworkItems` list;
-  - `NSUserTrackingUsageDescription`: "Your data will be used to show you
-    more relevant ads.";
-  - I'll check the Poing plugin's iOS steps when we get there **(check)**.
-- [ ] (Claude) If you picked option **B**: integrate StoreKit (real purchases)
-  plus a **Restore Purchases** button. The coin packs then appear on iOS only.
-  (you) In App Store Connect → the app → **Monetization → In-App Purchases**,
-  create 3 **Consumable** products. Use these IDs:
-  `com.neuronnest.microjam.coins_small`, `.coins_medium`, `.coins_large`,
-  each with a price tier, a display name and a review screenshot.
-- [ ] (you) App Store Connect → **Apps → + New App**: platform iOS, name
-  `Micro Jam: Bus Park Puzzle`, language English (U.S.), bundle ID
-  `com.neuronnest.microjam` (register it first in Developer → Identifiers if
-  it isn't listed), SKU `microjam`
-- [ ] (Claude) Export the Xcode project. (you) In Xcode: select **Any iOS
-  Device** → **Product → Archive** → **Distribute App → App Store Connect →
-  Upload**
-- [ ] (you) **TestFlight:** add yourself (and anyone else) as internal
-  testers and install it on a real iPhone. Check that ads play and that the
-  tracking prompt appears once. TestFlight has no 14-day rule.
+Done the same way as Aksyatra: no Xcode clicks, everything through
+`tools/build_ios.sh` and the App Store Connect API (key `R8FBS6AHU4`, App
+Manager role).
+
+- [x] (you) Apple Developer account (individual, Team `FDJM9L3UWW`), the app
+  record **Micro Jam: Bus Park Puzzle** (Apple ID 6823787820, SKU
+  `microjam`) and the bundle ID `com.neuronnest.microjam`
+- [x] (Claude) iOS export preset in `export_presets.cfg` (preset "iOS"):
+  - iPhone and iPad, version and build in `application/short_version` and
+    `application/version`, kept in step with Android;
+  - 1024 px icon `assets/app_icon/icon_1024.png` (no alpha);
+  - AdMob iOS app ID (written into Info.plist by the plugin), Google's
+    SKAdNetwork list, `NSUserTrackingUsageDescription`,
+    `ITSAppUsesNonExemptEncryption = false`;
+  - `privacy/tracking_enabled = false`. Turning it on with no tracking domains
+    is rejected (ITMS-91064); AdMob's own privacy manifest covers ads;
+  - sky-blue launch screen behind the loading-screen image.
+- [x] (Claude) Signing: profile **Micro Jam App Store (local)** (created via
+  the API, uses the Apple Distribution certificate in your keychain,
+  expires 2027-10-16) and `tools/ios_export_options.plist`
+- [x] (Claude) `tools/build_ios.sh upload`: export, archive and upload to
+  App Store Connect. `tools/build_ios.sh` alone opens the Xcode project.
+- [x] Purchases stay off on iOS for now (ads only, like Android): there's no
+  StoreKit backend yet, so no coin packs are shown.
+- [x] (Claude) Listing via the API: subtitle, description, keywords, promo
+  text, support/marketing/privacy URLs, categories (Games → Puzzle,
+  Casual), copyright, version 1.0.4
+- [x] (Claude) Screenshots: iPhone 6.9" (1320×2868,
+  `docs/store/screenshots/ios-6.9/`) and iPad 13" (2064×2752,
+  `docs/store/screenshots/ipad-13/`), plus the 29 s app preview
+  (`docs/store/video/micro_jam_appstore_886x1920.mp4`)
+- [ ] (you) **TestFlight:** install the build on a real iPhone and check that
+  ads play and the tracking prompt appears once
+- [ ] (you) **AdMob → Privacy & messaging → IDFA explainer** for Micro Jam
+  (iOS), so the explainer shows before Apple's tracking prompt
 - [ ] (you) **App Privacy** (App Store Connect → the app → App Privacy):
-  - Data collected:
-    - **Identifiers → Device ID**;
-    - **Location → Coarse location**;
-    - **Usage data → Product interaction**, **Advertising data**;
-    - **Diagnostics → Crash data**, **Performance data**.
+  - Data collected: **Identifiers → Device ID**; **Location → Coarse
+    location**; **Usage data → Product interaction, Advertising data**;
+    **Diagnostics → Crash data, Performance data**.
   - Each is used for **Third-party advertising** (plus Analytics) and is
     **not linked to the user's identity**.
   - **Tracking: Yes**, because ads can be personalised with the IDFA.
-  - With option B, add **Purchases → Purchase history**, used for **App
-    functionality**.
 - [ ] (you) **Age rating:** answer **None/No** to everything. In-app
-  purchases: **Yes** only with option B. Loot boxes: **No** (coins buy
-  specific items, never random ones).
-- [ ] (you) **Screenshots:** iPhone 6.5" display, 1242×2688, from
-  `docs/store/screenshots/ios-6.5/`. If App Store Connect asks for 6.9"
-  (1320×2868), tell me and I'll render that set.
-- [ ] (you) Subtitle, keywords, promotional text, description (Appendix A),
-  support URL `https://www.neuronnest.com/contact`, privacy URL
+  purchases: **No** (none on iOS yet). Loot boxes: **No**.
 - [ ] (you) **Submit for review**. Usually 24–48 hours.
 - [ ] (you) After approval: AdMob → Micro Jam (iOS) → **Link to store**
+
+**Next iOS release:** raise the version in both the Android and iOS presets
+(Android `version/code` and `version/name`; iOS `application/version` and
+`application/short_version`), run `tools/build_ios.sh upload`, then create the
+new version in App Store Connect (or ask me to do it via the API).
 
 ---
 
@@ -523,8 +524,8 @@ are done.
 | Title (Play and Apple) | Micro Jam: Bus Park Puzzle | 30 |
 | Play short description | Tap the buses out, fill them with the right passengers and clear the jam! | 80 |
 | Apple subtitle | Clear the Bus Park Jam! | 30 |
-| Apple promotional text | Kathmandu's bus park is jammed! Tap buses out in the right order, fill them with matching passengers and clear the lot. | 170 |
-| Apple keywords | `bus,jam,parking,traffic,puzzle,car out,unblock,colour,match,passenger,nepal,offline,brain,escape` | 100 |
+| Apple promotional text | The bus park is jammed! Tap buses out in the right order, fill them with matching passengers and clear the lot. No ads between levels, and it plays offline. | 170 |
+| Apple keywords | `bus,jam,park,traffic,puzzle,car out,unblock,colour,match,passenger,taxi,nepal,offline,brain,escape` | 100 |
 
 ### A.2 Full description (Play and Apple)
 
@@ -534,7 +535,8 @@ The bus park is jammed! Tap a microbus to drive it out of the lot. If another bu
 SIMPLE TO PLAY, CLEVER TO MASTER
 • One tap moves a bus. No timers, no rush.
 • Pick the right order before the bays fill up.
-• Endless levels that get busier and busier, up to 40+ buses in round, octagon, diamond and cross-shaped lots.
+• Endless levels that get busier and busier, up to 50 vehicles in round, octagon, diamond and cross-shaped lots.
+• Little taxis squeeze into tight spots and fill up fast.
 • HARD and SUPER HARD rush hours, with an easier level right after.
 
 TWISTS ON THE ROAD
@@ -542,14 +544,17 @@ TWISTS ON THE ROAD
 • Roadwork cones that block the way
 • Passengers hiding under umbrellas
 • A tunnel that sends out buses one by one
+• Mystery buses that keep their colour a secret
+• Padlocked buses that wait for the right colour to leave
 
 HANDY BOOSTERS
 • Crane: lift any bus straight out, even a boxed-in one
-• Extra Bay: open a sixth loading bay
+• Extra Bay: open another loading bay
 • Shuffle Queue: put the passengers in a better order
+• Grab one of each free every day
 
 SOMETHING NEW EVERY DAY
-• A new Daily Jam every day: free to play, and a streak for bigger rewards
+• A new Daily Jam every day on a big lot: free to play, with a streak for bigger rewards
 • Three easy Daily Tasks and a bonus chest
 • Achievements and a driving licence that shows your progress
 
@@ -564,9 +569,8 @@ FAIR AND COSY
 
 All towns, buses and people in the game are fictional. Grab the wheel and clear the jam!
 ```
-(With iOS option B, you may add "Optional coin packs available" on the App
-Store version only. Keep the Play text as it is: there are no purchases on
-Android.)
+(This is the text live on the App Store. The Play listing still has the
+earlier version; paste this one there too when you next update it.)
 
 ### A.3 Tips
 - Play has no keyword field. It ranks on the title and descriptions, so the

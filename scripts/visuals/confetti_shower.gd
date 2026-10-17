@@ -5,7 +5,7 @@ extends Node2D
 ## Squares, curly ribbons and a few gold stars in the bus palette, drawn in
 ## one _draw call; the node frees itself when done.
 
-const COLORS := ["e63946", "1d7fe0", "ffc300", "2ec27e", "8e44ad", "ff7f11", "ff5fa2", "7a4a28"]
+const COLORS := ["e63946", "1d7fe0", "ffc300", "2ec27e", "8e44ad", "ff7f11", "ff5fa2", "2fd6f7"]
 const GRAVITY := 1500.0
 const DRAG := 1.5
 const LIFE := 1.3

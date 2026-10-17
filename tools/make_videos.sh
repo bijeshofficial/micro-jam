@@ -69,9 +69,12 @@ if [ ${#ARGS[@]} -eq 0 ] || [[ " ${ARGS[*]} " == *" promo "* ]]; then
 fi
 
 if [ ${#ARGS[@]} -eq 0 ] || [[ " ${ARGS[*]} " == *" appstore "* ]]; then
-	record appstore 886 1920
+	# Set APPSTORE_REC="818 1772" on a screen too short for a 1920 px window:
+	# it records at the same aspect and is scaled to Apple's exact 886x1920.
+	read -r AW AH <<< "${APPSTORE_REC:-886 1920}"
+	record appstore "$AW" "$AH"
 	# Apple: H.264 High, <= 30 fps, 15-30 s, stereo AAC 256 kbps.
-	ffmpeg -v error -y -i "$TMP/appstore.avi" \
+	ffmpeg -v error -y -i "$TMP/appstore.avi" -vf "scale=886:1920:flags=lanczos" \
 		-c:v libx264 -preset slow -profile:v high -level 4.0 -pix_fmt yuv420p -r 30 \
 		-b:v 10M -maxrate 12M -bufsize 20M \
 		-af loudnorm=I=-16:TP=-1.5:LRA=11 -c:a aac -b:a 256k -ar 48000 -ac 2 -t 30 -movflags +faststart \

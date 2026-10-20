@@ -25,17 +25,25 @@ extends Control
 		shadow_color = v
 		queue_redraw()
 
+## Where an icon's artwork is centred on its 100x100 grid when that isn't
+## (50, 50); drawing is shifted so every icon sits visually centred in its box
+## (e.g. inside a round button).
+const ART_CENTER := {"crane": Vector2(48.5, 54.0), "bay_plus": Vector2(52.75, 50.0), "shuffle": Vector2(49.5, 50.0)}
 const NO_SHADOW := ["coin", "coin_pile", "bus", "ticket", "chest", "flame", "nav_shop", "nav_home", "nav_profile"]
 const INK := Color("17213f")
 
 
 func _draw() -> void:
+	var s := minf(size.x, size.y)
+	var center: Vector2 = ART_CENTER.get(icon, Vector2(50, 50))
+	var fix := (Vector2(50, 50) - center) * s / 100.0
 	if shadow and not NO_SHADOW.has(icon):
-		var off := minf(size.x, size.y) * 0.06
-		draw_set_transform(Vector2(0, off))
+		var off := s * 0.06
+		draw_set_transform(fix + Vector2(0, off))
 		_shape(Color(shadow_color, 0.85), Color(shadow_color, 0.85))
-		draw_set_transform(Vector2.ZERO)
+	draw_set_transform(fix)
 	_shape(color, accent)
+	draw_set_transform(Vector2.ZERO)
 
 
 

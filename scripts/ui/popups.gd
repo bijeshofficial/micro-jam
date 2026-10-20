@@ -21,10 +21,12 @@ static func confirm(title: String, body: String, yes_text: String, on_yes: Calla
 	})
 
 
-static func reward(title: String, body: String, icon: String = "coin_pile", on_close: Callable = Callable()) -> GamePopup:
+## Reward popup. With `items` ({coins, crane, extra_bay, shuffle}) the
+## rewards show as icon tiles (UIKit.reward_row) instead of a line of text.
+static func reward(title: String, body: String, icon: String = "coin_pile", on_close: Callable = Callable(), items: Dictionary = {}) -> GamePopup:
 	AudioManager.play("reward")
 	HapticsManager.medium()
-	return show({
+	var spec := {
 		"id": "reward",
 		"title": title,
 		"art": icon,
@@ -33,7 +35,11 @@ static func reward(title: String, body: String, icon: String = "coin_pile", on_c
 		"body_heavy": true,
 		"buttons": [{"id": "ok", "text": "Nice!", "kind": "primary", "icon": "check", "cb": on_close}],
 		"on_back": on_close,
-	})
+	}
+	if not items.is_empty():
+		spec["content"] = UIKit.reward_row(items)
+		spec["art_size"] = 200
+	return show(spec)
 
 
 ## Lives popup: count, countdown, refill for coins, +1 via rewarded ad.
@@ -263,7 +269,7 @@ static func _claim_chest(box: VBoxContainer) -> void:
 	if r.is_empty():
 		return
 	_fill_tasks(box)
-	reward("Bonus chest!", AchievementManager.reward_text(r), "chest")
+	reward("Bonus chest!", "", "chest", Callable(), r)
 
 
 ## The Daily Jam card: today's special level, streak and reward.

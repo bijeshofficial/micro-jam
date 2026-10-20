@@ -278,5 +278,5 @@ func claim(id: String) -> void:
 	var reward := AchievementManager.claim(id)
 	if reward.is_empty():
 		return
-	Popups.reward(AchievementManager.definition(id)["title"], AchievementManager.reward_text(reward), "trophy")
+	Popups.reward(AchievementManager.definition(id)["title"], "", "trophy", Callable(), reward)
 	changed.emit()

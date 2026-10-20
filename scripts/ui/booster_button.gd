@@ -61,12 +61,15 @@ const RADIUS := 60.0
 const CENTER_Y := 66.0
 const ICON := 66.0
 const BADGE_R := 27.0
+const LIP := 9.0
 
 
 func _layout() -> void:
 	pivot_offset = size * 0.5
-	var c := Vector2(size.x * 0.5, CENTER_Y)
-	_icon.position = c - Vector2(ICON * 0.5, ICON * 0.5 + 3)
+	# Centre on the disk's face, which sits half a lip above the disk centre
+	# (the drop shadow under the icon makes it read a touch lower, so go up a hair more).
+	var c := Vector2(size.x * 0.5, CENTER_Y - LIP * 0.5 - 2.0)
+	_icon.position = c - Vector2(ICON * 0.5, ICON * 0.5)
 	_icon.size = Vector2(ICON, ICON)
 	_label.position = Vector2(-20, CENTER_Y + RADIUS + 4)
 	_label.size = Vector2(size.x + 40, 40)
@@ -94,7 +97,7 @@ func _draw() -> void:
 	var cols: Array = COLORS[booster_id]
 	# Soft shadow so the disk reads on the asphalt (there's no tray behind it).
 	draw_circle(c + Vector2(0, 12), RADIUS + 2, Color(0.02, 0.04, 0.15, 0.35), true, -1.0, true)
-	DrawKit.glossy_circle(self, c + Vector2(0, _press * 4.0), RADIUS, cols[0], cols[1], 5.0, 9.0 * (1.0 - _press))
+	DrawKit.glossy_circle(self, c + Vector2(0, _press * 4.0), RADIUS, cols[0], cols[1], 5.0, LIP * (1.0 - _press))
 	var n := BoosterManager.count(booster_id)
 	var bc := c + Vector2(RADIUS * 0.9, -RADIUS * 0.68)
 	if n > 0 or _free:

@@ -658,9 +658,8 @@ func _open_gift() -> void:
 		"title": "Depot gift",
 		"art": "gift",
 		"art_color": UIKit.PINK,
-		"body": _gift_text(g),
-		"body_size": 54,
-		"body_heavy": true,
+		"content": UIKit.reward_row(_gift_items(g)),
+		"art_size": 200,
 		"vertical": true,
 		"buttons": [
 			{"id": "double", "text": "x2 GIFT", "kind": "purple", "icon": "ad", "close": false, "cb": _double_gift},
@@ -669,8 +668,9 @@ func _open_gift() -> void:
 	})
 
 
-func _gift_text(g: Dictionary) -> String:
-	return "+%d coins\n+1 %s" % [int(g["coins"]), BoosterManager.display_name(g["booster"])]
+## {coins, booster} from the depot gift as a reward dictionary.
+func _gift_items(g: Dictionary) -> Dictionary:
+	return {"coins": int(g["coins"]), String(g["booster"]): 1}
 
 
 ## Rewarded ad on the depot gift: the same coins and booster again, once.
@@ -687,7 +687,7 @@ func _double_gift() -> void:
 			return
 		if is_instance_valid(pop):
 			ScreenManager.close_modal(pop)
-		Popups.reward("Gift doubled!", _gift_text(g), "gift"))
+		Popups.reward("Gift doubled!", "", "gift", Callable(), _gift_items(g)))
 
 
 func continue_next() -> void:

@@ -176,7 +176,7 @@ func claim_daily() -> void:
 			return
 		SaveManager.game()["daily_free_claimed_date"] = GameManager.today()
 		CurrencyManager.add_coins(int(GameData.economy()["daily_free_coins"]))
-		Popups.reward("Daily gift", "+%d coins" % int(GameData.economy()["daily_free_coins"]))
+		Popups.reward("Daily gift", "", "gift", Callable(), {"coins": int(GameData.economy()["daily_free_coins"])})
 		_refresh_buttons()
 		changed.emit())
 
@@ -207,7 +207,7 @@ func claim_free_booster(id: String) -> void:
 			VFXManager.toast("Ad not available right now")
 			return
 		if BoosterManager.claim_free_ad(id):
-			Popups.reward("Free booster", "+1 %s" % BoosterManager.display_name(id), BoosterManager.icon(id))
+			Popups.reward("Free booster", "", "gift", Callable(), {id: 1})
 		_refresh_buttons()
 		changed.emit())
 
@@ -227,7 +227,7 @@ func _coin_pack_card(p: Dictionary) -> Control:
 	b.pressed.connect(func() -> void:
 		IAPManager.buy(p["id"], func(ok: bool) -> void:
 			if ok:
-				Popups.reward("Test purchase", "+%d coins" % int(p["coins"]))))
+				Popups.reward("Test purchase", "", "coin_pile", Callable(), {"coins": int(p["coins"])})))
 	v.add_child(b)
 	if p.has("ribbon"):
 		var holder := VBoxContainer.new()

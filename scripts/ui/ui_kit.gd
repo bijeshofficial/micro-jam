@@ -351,10 +351,54 @@ static func disk(icon_name: String, size: float = 220.0, base: Color = SECONDARY
 	var ic := icon(icon_name, size * 0.54, icon_color)
 	ic.shadow = icon_color == Color.WHITE
 	ic.accent = base
-	ic.position = Vector2(size * 0.23, size * 0.2)
 	ic.size = Vector2(size * 0.54, size * 0.54)
 	c.add_child(ic)
+	# Centred on the disk's face (half the 10 px lip above the middle), and
+	# kept there if a container makes this control bigger than `size`.
+	var place := func() -> void: ic.position = c.size * 0.5 - ic.size * 0.5 - Vector2(0, 7)
+	place.call()
+	c.resized.connect(place)
 	return c
+
+
+## A row of reward tiles: a coin pile with "+60", each booster as its glossy
+## coloured disk with "+1" and its name. `reward` is {coins, crane,
+## extra_bay, shuffle}. Tiles pop in one after another.
+static func reward_row(reward: Dictionary) -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 34)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var items: Array = []
+	if int(reward.get("coins", 0)) > 0:
+		items.append(["coin_pile", "+%d" % int(reward["coins"]), "Coins", Color(), Color()])
+	for k in BoosterManager.IDS:
+		if int(reward.get(k, 0)) > 0:
+			var cols: Array = BoosterButton.COLORS[k]
+			items.append([BoosterManager.icon(k), "+%d" % int(reward[k]), BoosterManager.display_name(k), cols[0], cols[1]])
+	for i in items.size():
+		var it: Array = items[i]
+		var tile := VBoxContainer.new()
+		tile.add_theme_constant_override("separation", 4)
+		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var art := CenterContainer.new()
+		art.custom_minimum_size = Vector2(150, 150)
+		art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if String(it[0]) == "coin_pile":
+			art.add_child(icon("coin_pile", 140))
+		else:
+			art.add_child(disk(String(it[0]), 140, it[3], it[4]))
+		tile.add_child(art)
+		tile.add_child(title(String(it[1]), 56, GOLD if String(it[0]) == "coin_pile" else Color.WHITE))
+		tile.add_child(label(String(it[2]), 30, INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER, true))
+		row.add_child(tile)
+		tile.modulate.a = 0.0
+		var tw := tile.create_tween()
+		tw.tween_interval(0.12 + 0.14 * i)
+		tw.tween_callback(func() -> void:
+			tile.pivot_offset = tile.size * 0.5
+			pop_in(tile))
+	return row
 
 
 static func spacer(height: float) -> Control:
